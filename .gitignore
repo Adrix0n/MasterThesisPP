@@ -1,0 +1,7 @@
+/external
+/.venv
+/notebooks/checkpoints
+/results
+uv.lock
+/.idea
+__pycache__
