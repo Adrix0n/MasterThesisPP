@@ -1,6 +1,8 @@
 # TODO
-- [ ] Wygenerowanie zbioru framsticków (ok 29000 patyczaków). Najlepiej równomierny podział na fitnessie
+- [X] Wygenerowanie zbioru framsticków (ok 29000 patyczaków). Najlepiej równomierny podział na fitnessie
 - [ ] Wybrać recenzenta
+- [ ] Odpowiednia konwersja f0 -> X, A
+- [ ] Odpowiednia konwersja X' A' -> f0
 - [ ] Utworzenie wersji z przetwarzaniem zamiennym (autoenkoder -> optymalizacja -> autoenkoder -> ...) 
 - [ ] Implementacja locality loss pod 3 postaciami oddzielnie (oddzielne warianty przetwarzania)
   - [ ] Part number

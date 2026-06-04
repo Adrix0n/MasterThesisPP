@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from torch_geometric.nn import DenseGCNConv
+from torch_geometric.nn import DenseGCNConv, GCNConv, GATConv
 
 class ConvLayer(nn.Module):
 	"""

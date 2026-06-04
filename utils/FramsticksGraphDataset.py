@@ -3,7 +3,7 @@ from torch.utils.data import Dataset
 
 
 class FramsticksGraphDataset(Dataset):
-	def __init__(self, genotypes: list[str], max_nodes: int = 15):
+	def __init__(self, genotypes: list[dict], max_nodes: int = 15):
 		self.genotypes = genotypes
 		self.max_nodes = max_nodes
 
@@ -11,8 +11,14 @@ class FramsticksGraphDataset(Dataset):
 		return len(self.genotypes)
 
 	def __getitem__(self, idx):
-		genotype_str = self.genotypes[idx]
-		return self.parse_f0_to_matrices(genotype_str, self.max_nodes)
+		genotype_str = self.genotypes[idx]['genotype']
+		x, adj, parts_num = self.parse_f0_to_matrices(genotype_str, self.max_nodes)
+		properties_dict = {
+			"parts_num": torch.tensor(parts_num, dtype=torch.float32),
+			"fitness": torch.tensor(self.genotypes[idx]['fitness'], dtype=torch.float32),
+			"dissimilarity": torch.tensor(0.0, dtype=torch.float32),
+		}
+		return x, adj, properties_dict
 
 	@staticmethod
 	def parse_f0_to_matrices(f0_str: str, max_nodes: int):
@@ -96,4 +102,4 @@ class FramsticksGraphDataset(Dataset):
 				if 0 <= p1 < max_nodes and 0 <= p2 < max_nodes:
 					a_matrix[p1, p2] = 1.0
 					a_matrix[p2, p1] = 1.0
-		return x_matrix, a_matrix
+		return x_matrix, a_matrix, part_idx

@@ -1,20 +1,20 @@
 import torch
 import torch.nn as nn
 import pytorch_lightning as pl
-from torch.optim import Adam
+import torch.optim as optim
 from typing import Dict, Any
 from src.models.KlejdaGAE.Encoder import Encoder
 from src.models.KlejdaGAE.DecoderA import DecoderA
 from src.models.KlejdaGAE.DecoderX import DecoderX
+from src.models.BaseGraphAutoEncoder import BaseGraphAutoEncoder
 
-class GraphAutoencoder(pl.LightningModule):
+class GraphAutoencoder(BaseGraphAutoEncoder):
 	"""
 	Pełny model Grafowego Autoenkodera (GAE) zaimplementowany w PyTorch Lightning.
 	"""
 
 	def __init__(self, config: Dict[str, Any]):
-		super().__init__()
-		self.save_hyperparameters(config)
+		super().__init__(config)
 
 		# Inicjalizacja Enkodera
 		self.encoder_backbone = Encoder(
@@ -43,7 +43,6 @@ class GraphAutoencoder(pl.LightningModule):
 			max_nodes=self.hparams.max_nodes
 		)
 
-		# Standardowe kryterium MSE
 		self.criterion = nn.MSELoss()
 
 	def forward(self, x: torch.Tensor, adj: torch.Tensor):
@@ -54,35 +53,25 @@ class GraphAutoencoder(pl.LightningModule):
 
 		return a_prime, x_prime, z
 
-	def training_step(self, batch, batch_idx):
-		x, adj = batch
-		a_prime, x_prime, _ = self(x, adj)
+	def compute_reconstruction_loss(self, batch):
+		# Rozpakowanie batcha
+		x, adj, properties = batch
 
+		# Przepływ przez ten konkretny model
+		a_prime, x_prime, z = self.forward(x, adj)
+
+		# Liczenie specyficznych strat
 		loss_a = self.criterion(a_prime, adj)
 		loss_x = self.criterion(x_prime, x)
-
 		weight_a = self.hparams.get('weight_a', 1000.0)
-		total_loss = (weight_a * loss_a) + loss_x
 
-		self.log("train/loss_total", total_loss, on_step=False, on_epoch=True, prog_bar=True)
-		self.log("train/loss_A", loss_a, on_step=False, on_epoch=True, prog_bar=False)
-		self.log("train/loss_X", loss_x, on_step=False, on_epoch=True, prog_bar=False)
+		recon_loss = (weight_a * loss_a) + loss_x
 
-		return total_loss
+		# Słownik z dodatkowymi wartościami do zalogowania
+		log_dict = {
+			"loss_A": loss_a,
+			"loss_X": loss_x
+		}
 
-	def validation_step(self, batch, batch_idx):
-		x, adj = batch
-		a_prime, x_prime, _ = self(x, adj)
-
-		loss_a = self.criterion(a_prime, adj)
-		loss_x = self.criterion(x_prime, x)
-
-		weight_a = self.hparams.get('weight_a', 1000.0)
-		val_loss = (weight_a * loss_a) + loss_x
-
-		self.log("val/loss_total", val_loss, on_step=False, on_epoch=True, prog_bar=True)
-		return val_loss
-
-	def configure_optimizers(self):
-		optimizer = Adam(self.parameters(), lr=self.hparams.learning_rate)
-		return optimizer
+		# Zgodnie z kontraktem, zwracamy 4 rzeczy do klasy bazowej
+		return recon_loss, z, properties, log_dict

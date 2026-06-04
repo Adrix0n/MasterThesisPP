@@ -4,11 +4,11 @@ sim_file: "eval-allcriteria.sim;deterministic.sim;sample-period-2.sim;only-body.
 opt_criteria:
   - "vertpos"
 
-pop_size: 12
-generations: 50
+pop_size: 120
+generations: 500
 tournament_size: 5
-p_mut: 0.9
-p_xov: 0.0
+p_mut: 0.2
+p_xov: 0.1
 hof_size: 10
 
 genformat: "0"
@@ -21,4 +21,4 @@ max_numconnections: null
 max_numgenochars: null
 
 result_filepath: "../results/sampled_individuals_new.jsonl"
-sampling_fraction: 0.6
+sampling_fraction: 0.7
