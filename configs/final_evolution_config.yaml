@@ -1,0 +1,24 @@
+frams_path: "../external/Framsticks55"
+frams_lib: null
+sim_file: "eval-allcriteria.sim;deterministic.sim;sample-period-2.sim;only-body.sim"
+opt_criteria:
+  - "vertpos"
+
+pop_size: 120
+generations: 50
+tournament_size: 5
+p_mut: 0.9
+p_xov: 0.0
+hof_size: 10
+
+genformat: "0"
+initial_genotype: null
+
+max_numparts: 25
+max_numjoints: 25
+max_numneurons: null
+max_numconnections: null
+max_numgenochars: null
+
+result_filepath: "../results/test_experiment_result.json"
+sampling_fraction: 0.6

@@ -110,7 +110,7 @@ class FramsticksPostProcessor:
 
 		for i in range(len(G.nodes)):
 			pos = G.nodes[i]['pos']
-			lines.append(f"p:{pos[0]:.4f}, {pos[1]:.4f}, {pos[2]:.4f}")
+			lines.append(f"p:{pos[0]}, {pos[1]}, {pos[2]}")
 
 		for u, v in G.edges():
 			lines.append(f"j:{u}, {v}")

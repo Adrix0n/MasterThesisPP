@@ -6,12 +6,12 @@ from typing import Dict, Any
 from src.models.KlejdaGAE.Encoder import Encoder
 from src.models.KlejdaGAE.DecoderA import DecoderA
 from src.models.KlejdaGAE.DecoderX import DecoderX
+from src.models.BaseGraphAutoEncoder import BaseGraphAutoEncoder
 
 
-class VariationalGraphAutoencoder(pl.LightningModule):
+class VariationalGraphAutoencoder(BaseGraphAutoEncoder):
 	def __init__(self, config: Dict[str, Any]):
-		super().__init__()
-		self.save_hyperparameters(config)
+		super().__init__(config)
 
 		# Inicjalizacja Enkodera
 		self.encoder_backbone = Encoder(
@@ -65,46 +65,29 @@ class VariationalGraphAutoencoder(pl.LightningModule):
 
 		return a_prime, x_prime, mu, logvar, z
 
-	def training_step(self, batch, batch_idx):
-		x, adj = batch
+	def compute_reconstruction_loss(self, batch):
+		# Rozpakowanie batcha
+		x, adj, properties = batch
 
-		a_prime, x_prime, mu, logvar, _ = self(x, adj)
+		# Przepływ przez ten konkretny model
+		a_prime, x_prime, mu, logvar, z = self.forward(x, adj)
 
+		# Liczenie specyficznych strat
 		loss_a = self.criterion(a_prime, adj)
 		loss_x = self.criterion(x_prime, x)
+		weight_a = self.hparams.get('weight_a', 1000.0)
 
+		# Dywergencja Kullbacka_Liblera
 		kl_loss = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp(), dim=1)
 		kl_loss = torch.mean(kl_loss)  # Uśredniamy karę dla całego batcha
-
-		weight_a = self.hparams.get('weight_a', 1000.0)
 		kl_weight = self.hparams.get('kl_weight', 1.0)  # Często beta < 1 pomaga zrekonstruować szczegóły
 
-		total_loss = (weight_a * loss_a) + loss_x + (kl_weight * kl_loss)
+		recon_loss = (weight_a * loss_a) + loss_x + (kl_weight * kl_loss)
 
-		self.log("train/loss_total", total_loss, on_step=False, on_epoch=True)
-		self.log("train/loss_A", loss_a, on_step=False, on_epoch=True)
-		self.log("train/loss_X", loss_x, on_step=False, on_epoch=True)
-		self.log("train/loss_KL", kl_loss, on_step=False, on_epoch=True)
+		log_dict = {
+			"loss_A": loss_a,
+			"loss_X": loss_x,
+			"loss_KL": kl_loss,
+		}
 
-		return total_loss
-
-	def validation_step(self, batch, batch_idx):
-		x, adj = batch
-		a_prime, x_prime, mu, logvar, _ = self(x, adj)
-
-		loss_a = self.criterion(a_prime, adj)
-		loss_x = self.criterion(x_prime, x)
-
-		kl_loss = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp(), dim=1)
-		kl_loss = torch.mean(kl_loss)
-
-		weight_a = self.hparams.get('weight_a', 1000.0)
-		kl_weight = self.hparams.get('kl_weight', 1.0)
-
-		val_loss = (weight_a * loss_a) + loss_x + (kl_weight * kl_loss)
-		self.log("val/loss_total", val_loss, on_step=False, on_epoch=True)
-
-		return val_loss
-
-	def configure_optimizers(self):
-		return Adam(self.parameters(), lr=self.hparams.learning_rate)
+		return recon_loss, z, properties, log_dict

@@ -20,6 +20,13 @@
   - [ ] Działanie na fenotypach
   - [ ] Zwrócenie uwagi na możliwe warstwy grafowe konwolucyjne
   - [ ] Poprawna weryfikacja przebiegu uczenia autoenkodera
+- [ ] Przygotować prezentację z wynikami
+  - [ ] Omówienie architektury
+    - [ ] Autoenkoder
+    - [ ] Dodatkowe człony funkcji straty
+  - [ ] Dane uczące do autoenkoder, wykres zbioru uczącego (zakres fitness na liczbę osobników)
+  - [ ] Wyniki eksperymentu
+
 
 ## Jakie eksperymenty?
 1. Bazowy algorytm ewolucyjny (1 bądź 2 rodzaje [GP i GE])
