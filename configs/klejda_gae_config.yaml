@@ -1,7 +1,8 @@
-in_channels: 3
+in_channels: 5
 max_nodes: 25
-latent_dim: 16
-learning_rate: 0.001
+#latent_dim: 16 # 3, 10, 15
+latent_dim: 15
+learning_rate: 0.01
 
 encoder_conv_channels:
   - 16
@@ -23,10 +24,10 @@ decoder_x_dense_features:
   - 64
   - 128
 
-weight_a: 1000.0
-kl_weight: 0.005
+weight_a: 500.0
+kl_weight: 0.007
 
-locality_loss_type: "parts_num" # 'fitness', 'parts_num' , 'dissimilarity'
+locality_loss_type: "fitness" # 'fitness', 'parts_num' , 'dissimilarity'
 locality_loss_method: "pearson"
 locality_loss_lambda_val: 1.0
 save_dir: "./checkpoints"

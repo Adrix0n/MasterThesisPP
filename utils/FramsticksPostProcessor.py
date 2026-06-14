@@ -3,7 +3,7 @@ import networkx as nx
 import torch
 
 class FramsticksPostProcessor:
-	def __init__(self, max_joint_length: float = 2.0, max_iterations: int = 100, threshold: float = 0.5):
+	def __init__(self, max_joint_length: float = 2.0, max_iterations: int = 100, threshold: float = 0.05):
 		self.max_len = max_joint_length
 		self.max_it = max_iterations
 		self.threshold = threshold
@@ -27,7 +27,15 @@ class FramsticksPostProcessor:
 
 		G = nx.Graph()
 		for new_idx, old_idx in enumerate(existing_nodes):
-			G.add_node(new_idx, pos=x[old_idx].copy())
+			features = x[old_idx].copy()
+			# x_prime ma teraz 5 cech. Rozdzielamy pozycję (indeksy 0,1,2)
+			# od właściwości fizycznych (indeksy 3,4)
+			G.add_node(
+				new_idx,
+				pos=features[:3],
+				fr=features[3],
+				ing=features[4]
+			)
 
 		for i in existing_nodes:
 			for j in existing_nodes:
@@ -35,9 +43,7 @@ class FramsticksPostProcessor:
 					G.add_edge(node_map[i], node_map[j])
 
 		self._fix_zero_length_joints(G)
-
 		self._match_isolated_parts(G)
-
 		is_valid = self._remove_too_long_joints(G)
 
 		f0_string = self._generate_f0_string(G) if is_valid else ""
@@ -110,9 +116,13 @@ class FramsticksPostProcessor:
 
 		for i in range(len(G.nodes)):
 			pos = G.nodes[i]['pos']
-			lines.append(f"p:{pos[0]}, {pos[1]}, {pos[2]}")
+			fr = G.nodes[i]['fr']
+			ing = G.nodes[i]['ing']
+
+			# Doklejamy fr= oraz ing= zgodnie z formatem Twojego zbioru danych
+			lines.append(f"p:{pos[0]}, {pos[1]}, {pos[2]}, fr={fr}, ing={ing}")
 
 		for u, v in G.edges():
 			lines.append(f"j:{u}, {v}")
 
-		return "\n".join(lines)
+		return "\n".join(lines) + "\n"

@@ -28,25 +28,46 @@ class BaseGraphAutoEncoder(pl.LightningModule):
 	def compute_reconstruction_loss(self, batch):
 		raise NotImplementedError("Klasa dziedzicząca musi implementować metodę 'compute_reconstruction_loss'")
 
-	def compute_locality_loss(self, z: torch.Tensor , properties: Dict[str,torch.Tensor]):
+	def compute_locality_loss(self, z: torch.Tensor, properties: Dict[str, torch.Tensor]):
 		if self.hparams.locality_loss_method is None:
 			return torch.tensor(0.0, device=z.device, requires_grad=True), torch.tensor(0.0, device=z.device)
+
 		batch_size = z.size(0)
 		if batch_size <= 1:
 			return torch.tensor(0.0, device=z.device, requires_grad=True), torch.tensor(0.0, device=z.device)
 
-		loss_type =self.hparams.locality_loss_type
+		loss_type = self.hparams.locality_loss_type
 		loss_method = self.hparams.locality_loss_method
 		lambda_val = self.hparams.locality_loss_lambda_val
 
+		# Kształt: [batch_size]
 		prop = properties[loss_type].squeeze()
 
-		distances = torch.cdist(z,z,p=2.0)
-		mean_distances = distances.sum(dim=1) / (batch_size - 1)
+		# 1. Macierz odległości w przestrzeni ukrytej z (Euklidesowa)
+		# Kształt: [batch_size, batch_size]
+		z_dist = torch.cdist(z, z, p=2.0)
 
+		# 2. Macierz różnic właściwości (np. absolutna różnica fitnessu)
+		# Musimy dodać wymiar, by cdist zadziałało: [batch_size, 1]
+		prop_unsq = prop.unsqueeze(1)
+		# Używamy L1 (p=1.0), co dla skalarów daje po prostu |prop_i - prop_j|
+		prop_dist = torch.cdist(prop_unsq, prop_unsq, p=1.0)
+
+		# 3. Pobranie tylko górnego trójkąta macierzy (bez przekątnej!)
+		# Chcemy unikalne pary (i, j). Pomijamy zera na przekątnej (i=i).
+		row, col = torch.triu_indices(batch_size, batch_size, offset=1)
+
+		# Spłaszczone wektory z unikalnymi odległościami par
+		# Kształt: [(batch_size * (batch_size - 1)) / 2]
+		z_dist_flat = z_dist[row, col]
+		prop_dist_flat = prop_dist[row, col]
+
+		# 4. Obliczenie korelacji na spłaszczonych wektorach par
 		if loss_method == 'pearson':
-			corr = self._pearson_correlation(mean_distances, prop)
-			loss = lambda_val * (1-corr)
+			corr = self._pearson_correlation(z_dist_flat, prop_dist_flat)
+			# Chcemy silnej dodatniej korelacji: duża odległość w Z -> duża różnica fitnessu
+			# Maksymalizacja korelacji (do 1.0) minimalizuje loss
+			loss = lambda_val * (1 - corr)
 		else:
 			raise ValueError
 

@@ -39,7 +39,7 @@ class GraphAutoencoder(BaseGraphAutoEncoder):
 			latent_dim=self.hparams.latent_dim,
 			conv_channels=self.hparams.decoder_x_conv_channels,
 			dense_features=self.hparams.decoder_x_dense_features,
-			out_features=self.hparams.in_channels,  # np. 3 dla X, Y, Z
+			out_features=self.hparams.in_channels,
 			max_nodes=self.hparams.max_nodes
 		)
 
@@ -75,3 +75,14 @@ class GraphAutoencoder(BaseGraphAutoEncoder):
 
 		# Zgodnie z kontraktem, zwracamy 4 rzeczy do klasy bazowej
 		return recon_loss, z, properties, log_dict
+
+	def encode(self, x: torch.Tensor, adj: torch.Tensor):
+		hidden_features = self.encoder_backbone(x, adj)
+		z = self.fc_z(hidden_features)
+		return z
+
+	def decode(self, z: torch.Tensor):
+		a_prime = self.decoder_a(z)
+		x_prime = self.decoder_x(z, a_prime)
+
+		return x_prime, a_prime

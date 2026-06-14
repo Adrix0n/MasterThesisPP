@@ -14,25 +14,29 @@ class FramsticksGraphDataset(Dataset):
 		genotype_str = self.genotypes[idx]['genotype']
 		x, adj, parts_num = self.parse_f0_to_matrices(genotype_str, self.max_nodes)
 		properties_dict = {
-			"parts_num": torch.tensor(parts_num, dtype=torch.float32),
-			"fitness": torch.tensor(self.genotypes[idx]['fitness'], dtype=torch.float32),
-			"dissimilarity": torch.tensor(0.0, dtype=torch.float32),
+			"parts_num": torch.tensor(parts_num, dtype=torch.float64),
+			"fitness": torch.tensor(self.genotypes[idx]['fitness'], dtype=torch.float64),
+			"dissimilarity": torch.tensor(0.0, dtype=torch.float64),
 		}
 		return x, adj, properties_dict
 
 	@staticmethod
 	def parse_f0_to_matrices(f0_str: str, max_nodes: int):
-		x_matrix = torch.full((max_nodes, 3), -1.0, dtype=torch.float32)
-		a_matrix = torch.zeros((max_nodes, max_nodes), dtype=torch.float32)
+		# Wierzchołki teraz mają 5 cech: [x, y, z, fr, ing]
+		x_matrix = torch.zeros((max_nodes, 5), dtype=torch.float64)
+
+		# Macierz sąsiedztwa (1.0 = jest krawędź, 0.0 = brak krawędzi)
+		a_matrix = torch.zeros((max_nodes, max_nodes), dtype=torch.float64)
+
+		# Macierz cech krawędzi (stawów): [stif, rotstif]
+		edge_attr_matrix = torch.zeros((max_nodes, max_nodes, 2), dtype=torch.float64)
 
 		lines = f0_str.strip().split('\n')
-
 		part_idx = 0
 
 		for line in lines:
 			line = line.strip()
-			if not line or line.startswith('#') or line.startswith('//') or line.startswith('n:') or line.startswith(
-					'c:'):
+			if not line or line[0] in ('#', '/') or line.startswith(('n:', 'c:')):
 				continue
 
 			if line.startswith('p:'):
@@ -40,33 +44,34 @@ class FramsticksGraphDataset(Dataset):
 					raise ValueError(f"Znaleziono więcej niż {max_nodes} części w genotypie!")
 
 				props_str = line[2:].strip()
-				coords = [0.0, 0.0, 0.0]
+				props = {}
+				unnamed_args = []
 
+				# Rozdzielenie parametrów zdefiniowanych wprost od tych ze znakiem '='
 				if props_str:
-					parts = props_str.split(',')
-					for i, prop in enumerate(parts):
-						prop = prop.strip()
-						if not prop: continue
-
+					for prop in props_str.split(','):
 						if '=' in prop:
 							key, val = prop.split('=', 1)
-							key = key.strip()
-							try:
-								if key == 'x':
-									coords[0] = float(val)
-								elif key == 'y':
-									coords[1] = float(val)
-								elif key == 'z':
-									coords[2] = float(val)
-							except ValueError:
-								pass
+							props[key.strip()] = val.strip()
 						else:
-							try:
-								if i < 3: coords[i] = float(prop)
-							except ValueError:
-								pass
-				x_matrix[part_idx] = torch.tensor(coords, dtype=torch.float32)
+							unnamed_args.append(prop.strip())
+
+				# Pobieranie współrzędnych
+				x = float(unnamed_args[0]) if len(unnamed_args) > 0 else float(props.get('x', 0.0))
+				y = float(unnamed_args[1]) if len(unnamed_args) > 1 else float(props.get('y', 0.0))
+				z = float(unnamed_args[2]) if len(unnamed_args) > 2 else float(props.get('z', 0.0))
+
+				# Pobieranie nowych cech z domyślną wartością 0.0 w przypadku ich braku
+				fr = float(props.get('fr', 0.0))
+				ing = float(props.get('ing', 0.0))
+
+				x_matrix[part_idx] = torch.tensor([x, y, z, fr, ing], dtype=torch.float64)
+
+				# Pętla własna dla wierzchołka
 				a_matrix[part_idx, part_idx] = 1.0
+				# Domyślne wartości dla pętli własnej (sztywny staw)
+				edge_attr_matrix[part_idx, part_idx] = torch.tensor([1.0, 1.0], dtype=torch.float64)
+
 				part_idx += 1
 
 			elif line.startswith('j:'):
@@ -74,32 +79,35 @@ class FramsticksGraphDataset(Dataset):
 				if not props_str:
 					continue
 
-				p1, p2 = -1, -1
-				parts = props_str.split(',')
+				props = {}
+				unnamed_args = []
 
-				for i, prop in enumerate(parts):
-					prop = prop.strip()
-					if not prop: continue
-
+				for prop in props_str.split(','):
 					if '=' in prop:
 						key, val = prop.split('=', 1)
-						key = key.strip()
-						try:
-							if key == 'p1':
-								p1 = int(val)
-							elif key == 'p2':
-								p2 = int(val)
-						except ValueError:
-							pass
+						props[key.strip()] = val.strip()
 					else:
-						try:
-							if i == 0:
-								p1 = int(prop)
-							elif i == 1:
-								p2 = int(prop)
-						except ValueError:
-							pass
-				if 0 <= p1 < max_nodes and 0 <= p2 < max_nodes:
-					a_matrix[p1, p2] = 1.0
-					a_matrix[p2, p1] = 1.0
+						unnamed_args.append(prop.strip())
+
+				try:
+					p1 = int(unnamed_args[0]) if len(unnamed_args) > 0 else int(props.get('p1', -1))
+					p2 = int(unnamed_args[1]) if len(unnamed_args) > 1 else int(props.get('p2', -1))
+
+					if 0 <= p1 < max_nodes and 0 <= p2 < max_nodes:
+						a_matrix[p1, p2] = 1.0
+						a_matrix[p2, p1] = 1.0
+
+						# Pobieranie stif i rotstif (we Framsticks domyślnie 1.0 dla sztywnego połączenia)
+						stif = float(props.get('stif', 1.0))
+						rotstif = float(props.get('rotstif', 1.0))
+
+						edge_features = torch.tensor([stif, rotstif], dtype=torch.float64)
+
+						# Graf nieskierowany, więc zapisujemy cechy dla obu kierunków
+						edge_attr_matrix[p1, p2] = edge_features
+						edge_attr_matrix[p2, p1] = edge_features
+				except (ValueError, IndexError):
+					pass
+
+		# Zwracamy 3 macierze oraz liczbę węzłów
 		return x_matrix, a_matrix, part_idx

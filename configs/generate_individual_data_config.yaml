@@ -4,9 +4,9 @@ sim_file: "eval-allcriteria.sim;deterministic.sim;sample-period-2.sim;only-body.
 opt_criteria:
   - "vertpos"
 
-pop_size: 120
-generations: 500
-tournament_size: 5
+pop_size: 300
+generations: 150
+tournament_size: 10
 p_mut: 0.2
 p_xov: 0.1
 hof_size: 10
@@ -20,5 +20,5 @@ max_numneurons: null
 max_numconnections: null
 max_numgenochars: null
 
-result_filepath: "../results/sampled_individuals_new.jsonl"
-sampling_fraction: 0.7
+result_filepath: "../results/sampled_individuals_better.jsonl"
+sampling_fraction: 0.4

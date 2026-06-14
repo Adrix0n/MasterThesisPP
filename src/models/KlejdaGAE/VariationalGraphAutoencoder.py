@@ -91,3 +91,17 @@ class VariationalGraphAutoencoder(BaseGraphAutoEncoder):
 		}
 
 		return recon_loss, z, properties, log_dict
+
+	def encode(self, x: torch.Tensor, adj: torch.Tensor):
+		hidden_features = self.encoder_backbone(x, adj)
+		mu = self.fc_mu(hidden_features)
+		logvar = self.fc_logvar(hidden_features)
+
+		z = self.reparameterize(mu, logvar)
+		return z
+
+	def decode(self, z: torch.Tensor):
+		a_prime = self.decoder_a(z)
+		x_prime = self.decoder_x(z, a_prime)
+
+		return x_prime, a_prime

@@ -14,7 +14,7 @@ class Encoder(nn.Module):
 			in_channels: int,
 			conv_channels: List[int],
 			dense_features: List[int],
-			max_nodes: int = 15
+			max_nodes: int
 	):
 		super().__init__()
 		self.max_nodes = max_nodes
