@@ -1,3 +1,4 @@
+# Ostateczna konfiguracja wykorzystywana przy przeprowadzeniu eksperymentów
 frams_path: "../external/Framsticks55"
 frams_lib: null
 sim_file: "eval-allcriteria.sim;deterministic.sim;sample-period-2.sim;only-body.sim"

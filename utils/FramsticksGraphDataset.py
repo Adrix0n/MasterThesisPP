@@ -28,9 +28,6 @@ class FramsticksGraphDataset(Dataset):
 		# Macierz sąsiedztwa (1.0 = jest krawędź, 0.0 = brak krawędzi)
 		a_matrix = torch.zeros((max_nodes, max_nodes), dtype=torch.float64)
 
-		# Macierz cech krawędzi (stawów): [stif, rotstif]
-		edge_attr_matrix = torch.zeros((max_nodes, max_nodes, 2), dtype=torch.float64)
-
 		lines = f0_str.strip().split('\n')
 		part_idx = 0
 
@@ -67,10 +64,7 @@ class FramsticksGraphDataset(Dataset):
 
 				x_matrix[part_idx] = torch.tensor([x, y, z, fr, ing], dtype=torch.float64)
 
-				# Pętla własna dla wierzchołka
 				a_matrix[part_idx, part_idx] = 1.0
-				# Domyślne wartości dla pętli własnej (sztywny staw)
-				edge_attr_matrix[part_idx, part_idx] = torch.tensor([1.0, 1.0], dtype=torch.float64)
 
 				part_idx += 1
 
@@ -96,16 +90,6 @@ class FramsticksGraphDataset(Dataset):
 					if 0 <= p1 < max_nodes and 0 <= p2 < max_nodes:
 						a_matrix[p1, p2] = 1.0
 						a_matrix[p2, p1] = 1.0
-
-						# Pobieranie stif i rotstif (we Framsticks domyślnie 1.0 dla sztywnego połączenia)
-						stif = float(props.get('stif', 1.0))
-						rotstif = float(props.get('rotstif', 1.0))
-
-						edge_features = torch.tensor([stif, rotstif], dtype=torch.float64)
-
-						# Graf nieskierowany, więc zapisujemy cechy dla obu kierunków
-						edge_attr_matrix[p1, p2] = edge_features
-						edge_attr_matrix[p2, p1] = edge_features
 				except (ValueError, IndexError):
 					pass
 

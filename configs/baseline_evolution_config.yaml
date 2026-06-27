@@ -1,10 +1,11 @@
+# Bazowa konfiguracja do przeprowadzenia ewolucji w domyślnej przestrzeni
 frams_path: "../external/Framsticks55"
 frams_lib: null
 sim_file: "eval-allcriteria.sim;deterministic.sim;sample-period-2.sim;only-body.sim"
 opt_criteria:
   - "vertpos"
 
-pop_size: 12
+pop_size: 120
 generations: 50
 tournament_size: 5
 p_mut: 0.9
@@ -20,5 +21,6 @@ max_numneurons: null
 max_numconnections: null
 max_numgenochars: null
 
+# Konfiguracja zapisu
 result_filepath: "../results/baseline_evolution_result.json"
-sampling_fraction: 0.6
+sampling_fraction: 0.6 # Jaka część osobników generowanych w trakcie ewolucji jest zapisywana przy każdej epoce do pliku

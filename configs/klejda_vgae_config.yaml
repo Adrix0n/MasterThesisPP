@@ -1,3 +1,4 @@
+# Konfiguracja Wariacyjnego Autoenkodera. Raczej identyczny, jak wersja niewariacyjna
 in_channels: 5
 max_nodes: 25
 #latent_dim: 16 # 3, 10, 15
