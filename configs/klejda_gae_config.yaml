@@ -2,7 +2,7 @@
 in_channels: 5
 max_nodes: 25
 #latent_dim: 16 # 3, 10, 15
-latent_dim: 15
+latent_dim: 3
 learning_rate: 0.01
 
 encoder_conv_channels:
@@ -29,6 +29,6 @@ weight_a: 500.0
 kl_weight: 0.007
 
 locality_loss_type: "fitness" # 'fitness', 'parts_num' , 'dissimilarity'
-locality_loss_method: "pearson" # TODO: Tutaj zmodyfikować po poprawie
+locality_loss_method: "spearman" # 'pearson', 'spearman'
 locality_loss_lambda_val: 1.0
 save_dir: "./checkpoints"

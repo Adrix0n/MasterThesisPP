@@ -1,13 +1,24 @@
+# TODO 2
+- [ ] Wygenerować lepszy zbiór framsticków (taki, w którym bierzemy osobników z hall of fame dla każdej ?epoki?)
+  - Wiele odtworzeń
+  - Równomierne rozłożenie przykładów
+- [ ] CMA-ES jako r
+- [ ] Badać poziom poprawności dekodowania (przyda się przy wersji z douczaniem)
+- [ ] Implementacja wersji z douczaniem
+  - [ ] 1. W trakcie działania zapisywać genotypy powstające z dekodowania
+  - [ ] 2. Jeżeli poziom odtwarzania spadnie poniżej progu, douczyć autoenkoder zapisanymi osobnikami
+  - [ ] 3. Po douczeniu uruchamiamy ponownie algorytm ale ze startowego (lub nie) miejsca i wracamy do kroku 1
+- [ ] Dokończyć reimplementacje, weryfikując poprawność reimplementacji
+- [ ] Zaimplementować locality loss dla similarity
+- [ ] Slurp, slurm
+- [ ] Wypisać co znajdzie się w wynikach, jakie wykresy itp.
+- [X] Poprawić stratę locality na spearmana
+
 # TODO
 - [X] Wygenerowanie zbioru framsticków (ok 29000 patyczaków). Najlepiej równomierny podział na fitnessie
 - [ ] Wybrać recenzenta
 - [ ] Odpowiednia konwersja f0 -> X, A
 - [ ] Odpowiednia konwersja X' A' -> f0
-- [ ] Utworzenie wersji z przetwarzaniem zamiennym (autoenkoder -> optymalizacja -> autoenkoder -> ...) 
-- [ ] Implementacja locality loss pod 3 postaciami oddzielnie (oddzielne warianty przetwarzania)
-  - [ ] Part number
-  - [ ] Fitness value
-  - [ ] Dissimilarity (trudne, bo jak identyczna wieża stojąca i leżąca od różny fitness, ale te dissimilarity równe 0)
 - [ ] Wykonanie całego pipeline uczenia wraz z zapisywaniem poprawnie wyników
 - [ ] Implementacja naprawiania i weryfikowania wyników
 - [ ] Własna implementacja
@@ -24,23 +35,16 @@
   - [ ] Omówienie architektury
     - [ ] Autoenkoder
     - [ ] Dodatkowe człony funkcji straty
-  - [ ] Dane uczące do autoenkoder, wykres zbioru uczącego (zakres fitness na liczbę osobników)
+  - [ ] Dane uczące do autoenkodera, wykres zbioru uczącego (zakres fitness na liczbę osobników)
   - [ ] Wyniki eksperymentu
 
-
 ## Jakie eksperymenty?
-1. Bazowy algorytm ewolucyjny (1 bądź 2 rodzaje [GP i GE])
-2. Cykliczny z przejściami (douczanie <-> optymalizacja przestrzeni) z uwzględnieniem stagnacji
-   1. Warianty z part number locality loss
-   2. Wariant z fitness value locality loss
-   3. Wariant z dissimilarity locality loss
-3. Na nauczonym autoenkoderze
-   1. Warianty z part number locality loss
-   2. Wariant z fitness value locality loss
-   3. Wariant z dissimilarity locality loss
-4. Wariacyjny cykliczny z przejściami
-   1. Tak samo warianty z locality loss
-5. Na nauczonym wariacyjnym autoenkoderze
-   1. Tak samo warianty z locality loss
-6. Ten z reimplementacji (zwykły i wariacyjny):
-   1. Warianty z locality loss
+- Bazowy algorytm ewolucyjny (1 bądź 2 rodzaje [GP i GE])
+Zwykły i wariacyjny:
+    Trzy locality loss: part number, fitness, similarity:
+    - Na nauczonym autoenkoderze
+    - Z douczaniem
+    - Ten z reimplementacji
+Łącznie: 1 + 2 * 3 * 3 = 19
+
+# Dodatkowe informacje
