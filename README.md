@@ -9,7 +9,7 @@
   - [ ] 2. Jeżeli poziom odtwarzania spadnie poniżej progu, douczyć autoenkoder zapisanymi osobnikami
   - [ ] 3. Po douczeniu uruchamiamy ponownie algorytm ale ze startowego (lub nie) miejsca i wracamy do kroku 1
 - [ ] Dokończyć reimplementacje, weryfikując poprawność reimplementacji
-- [ ] Zaimplementować locality loss dla similarity
+- [?] Zaimplementować locality loss dla similarity
 - [ ] Slurp, slurm
 - [ ] Wypisać co znajdzie się w wynikach, jakie wykresy itp.
 - [X] Poprawić stratę locality na spearmana
@@ -46,5 +46,7 @@ Zwykły i wariacyjny:
     - Z douczaniem
     - Ten z reimplementacji
 Łącznie: 1 + 2 * 3 * 3 = 19
+
+> Obliczać również czas i warunkować eksperyment czasem przetwarzania
 
 # Dodatkowe informacje

@@ -2,12 +2,28 @@ import pytorch_lightning as pl
 from typing import Dict, Any, Tuple
 import torch.optim as optim
 import torch
-import torch.nn.functional as F
+import os
+import sys
+current_dir = os.getcwd()
+framspy_path = os.path.abspath(os.path.join(current_dir, '..', 'external', 'framspy'))
+if framspy_path not in sys.path:
+	sys.path.insert(0, framspy_path)
+from dissimilarity.density_distribution import DensityDistribution
 
 class BaseGraphAutoEncoder(pl.LightningModule):
-	def __init__(self, config: Dict[str, Any]):
+	def __init__(self, config: Dict[str, Any], frams_module):
 		super().__init__()
 		self.save_hyperparameters(config)
+		self.density_distribution = DensityDistribution(
+			frams_module = frams_module,
+			density = 10,			# default
+			resolution = 8,			# default
+			reduce_empty = True,	# default
+			frequency = False,		# default
+			metric = 'emd',			# default
+			fixedZaxis = False,		# default
+			verbose = False 		# default
+		)
 
 	# Korelacja Pearsona określa poziom liniowości zależności (zakres -1.0 ... 1.0)
 	def _pearson_correlation(self, x: torch.Tensor, y: torch.Tensor):
@@ -60,32 +76,37 @@ class BaseGraphAutoEncoder(pl.LightningModule):
 	def compute_reconstruction_loss(self, batch):
 		raise NotImplementedError("Klasa dziedzicząca musi implementować metodę 'compute_reconstruction_loss'")
 
-	def compute_locality_loss(self, z: torch.Tensor, properties: Dict[str, torch.Tensor]) -> Tuple[
+	def compute_locality_loss(self, z: torch.Tensor, properties: Dict[str, any]) -> Tuple[
 		torch.Tensor, torch.Tensor]:
-		if self.hparams.locality_loss_method is None:
-			return torch.tensor(0.0, device=z.device, requires_grad=True), torch.tensor(0.0, device=z.device)
+		if self.hparams.get('locality_loss_method') is None:
+			return torch.tensor(0.0, device=z.device), torch.tensor(0.0, device=z.device)
 
 		batch_size = z.size(0)
 		if batch_size <= 1:
-			return torch.tensor(0.0, device=z.device, requires_grad=True), torch.tensor(0.0, device=z.device)
+			return torch.tensor(0.0, device=z.device), torch.tensor(0.0, device=z.device)
 
 		loss_type = self.hparams.locality_loss_type
 		loss_method = self.hparams.locality_loss_method
 		lambda_val = self.hparams.locality_loss_lambda_val
 
-		prop = properties[loss_type].squeeze()
-
-		# 1. Obliczanie macierzy odległości
 		z_dist = torch.cdist(z, z, p=2.0)
-		prop_unsq = prop.unsqueeze(1)
-		prop_dist = torch.cdist(prop_unsq, prop_unsq, p=1.0)
 
-		# 2. Pobranie unikalnych par (górny trójkąt bez przekątnej)
+		# Dla similarity należy skorzystać z biblioteki Framsticks, która pozwala wyliczyć macierz dissimilarity
+		if loss_type == 'similarity':
+			genotypes = properties['genotype']
+			dissimilarity_matrix = self.density_distribution.getDissimilarityMatrix(genotypes)
+			prop_dist = torch.tensor(dissimilarity_matrix, dtype=torch.float32, device=z.device)
+		else:
+			prop = properties[loss_type].squeeze()
+			prop_unsq = prop.unsqueeze(1)
+			prop_dist = torch.cdist(prop_unsq, prop_unsq, p=1.0)
+
+		# Pobranie unikalnych par (górny trójkąt bez przekątnej)
 		row, col = torch.triu_indices(batch_size, batch_size, offset=1)
 		z_dist_flat = z_dist[row, col]
 		prop_dist_flat = prop_dist[row, col]
 
-		# 3. Wybór metody i obliczanie straty oraz korelacji (do logów)
+		# Wybór metody i obliczanie straty oraz korelacji (do logów)
 		if loss_method == 'pearson':
 			corr = self._pearson_correlation(z_dist_flat, prop_dist_flat)
 			loss = lambda_val * (1 - corr)

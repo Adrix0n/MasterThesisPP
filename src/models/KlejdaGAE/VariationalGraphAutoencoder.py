@@ -10,8 +10,8 @@ from src.models.BaseGraphAutoEncoder import BaseGraphAutoEncoder
 
 
 class VariationalGraphAutoencoder(BaseGraphAutoEncoder):
-	def __init__(self, config: Dict[str, Any]):
-		super().__init__(config)
+	def __init__(self, config: Dict[str, Any], frams_module):
+		super().__init__(config, frams_module)
 
 		# Inicjalizacja Enkodera
 		self.encoder_backbone = Encoder(

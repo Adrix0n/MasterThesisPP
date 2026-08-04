@@ -13,8 +13,8 @@ class GraphAutoencoder(BaseGraphAutoEncoder):
 	Pełny model Grafowego Autoenkodera (GAE) zaimplementowany w PyTorch Lightning.
 	"""
 
-	def __init__(self, config: Dict[str, Any]):
-		super().__init__(config)
+	def __init__(self, config: Dict[str, Any], frams_module):
+		super().__init__(config, frams_module)
 
 		# Inicjalizacja Enkodera
 		self.encoder_backbone = Encoder(

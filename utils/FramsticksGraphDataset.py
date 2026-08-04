@@ -16,7 +16,7 @@ class FramsticksGraphDataset(Dataset):
 		properties_dict = {
 			"parts_num": torch.tensor(parts_num, dtype=torch.float64),
 			"fitness": torch.tensor(self.genotypes[idx]['fitness'], dtype=torch.float64),
-			"dissimilarity": torch.tensor(0.0, dtype=torch.float64),
+			"genotype": genotype_str
 		}
 		return x, adj, properties_dict
 
