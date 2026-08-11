@@ -9,6 +9,7 @@ framspy_path = os.path.abspath(os.path.join(current_dir, '..', 'external', 'fram
 if framspy_path not in sys.path:
 	sys.path.insert(0, framspy_path)
 from dissimilarity.density_distribution import DensityDistribution
+from utils.FramsticksPostProcessor import FramsticksPostProcessor
 
 class BaseGraphAutoEncoder(pl.LightningModule):
 	def __init__(self, config: Dict[str, Any], frams_module):
@@ -24,6 +25,8 @@ class BaseGraphAutoEncoder(pl.LightningModule):
 			fixedZaxis = False,		# default
 			verbose = False 		# default
 		)
+		# TODO: Może jako parametr?
+		self.post_processor = FramsticksPostProcessor(max_iterations=5)
 
 	# Korelacja Pearsona określa poziom liniowości zależności (zakres -1.0 ... 1.0)
 	def _pearson_correlation(self, x: torch.Tensor, y: torch.Tensor):
@@ -143,3 +146,18 @@ class BaseGraphAutoEncoder(pl.LightningModule):
 
 	def forward(self, *args, **kwargs):
 		raise NotImplementedError("Klasa dziedzicząca musi implementować metodę 'forward'")
+
+	def calc_valid_perc(self, x_prime: torch.Tensor, y_prime: torch.Tensor) -> float:
+		count = x_prime.size(0)
+		if count == 0:
+			return 0
+		else:
+			valid_count = 0
+			tries_counter = 0
+			for i in range(count):
+				repair_tries, _, _ = self.post_processor.process(x_prime[i], y_prime[i])
+				tries_counter += repair_tries
+				if repair_tries < self.post_processor.max_it:
+					valid_count += 1
+			print(valid_count, count, tries_counter)
+			return valid_count / float(count)

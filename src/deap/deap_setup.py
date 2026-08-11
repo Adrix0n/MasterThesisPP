@@ -1,4 +1,4 @@
-from deap import base, creator, tools
+from deap import base, creator, tools, cma
 from src.deap.native_operators import frams_evaluate, frams_crossover, frams_mutate, frams_getsimplest
 from src.deap.selection import selTournament_only_feasible, selNSGA2_only_feasible
 
@@ -25,4 +25,19 @@ def prepare_native_toolbox(frams_lib, config: dict):
 	else:
 		toolbox.register("select", selNSGA2_only_feasible)
 
+	return toolbox
+
+def prepare_cmaes_toolbox(frams_lib, config: dict):
+	opt_criteria = config['opt_criteria']
+
+	if not hasattr(creator, "FitnessMax"):
+		creator.create("FitnessMax", base.Fitness, weights=[1.0] * len(opt_criteria))
+	if not hasattr(creator, "Individual"):
+		creator.create("Individual", list, fitness=creator.FitnessMax)
+
+	strategy = cma.Strategy(centroid=[config['centroid']] * config['latent_dim'], sigma= config['sigma'], lambda_=config['pop_size'])
+
+	toolbox = base.Toolbox()
+	toolbox.register("generate",strategy.generate,creator.Individual)
+	toolbox.register("update",strategy.update)
 	return toolbox

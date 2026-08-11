@@ -7,7 +7,6 @@ from src.models.KlejdaGAE.Encoder import Encoder
 from src.models.KlejdaGAE.DecoderA import DecoderA
 from src.models.KlejdaGAE.DecoderX import DecoderX
 from src.models.BaseGraphAutoEncoder import BaseGraphAutoEncoder
-
 class GraphAutoencoder(BaseGraphAutoEncoder):
 	"""
 	Pełny model Grafowego Autoenkodera (GAE) zaimplementowany w PyTorch Lightning.
@@ -45,6 +44,8 @@ class GraphAutoencoder(BaseGraphAutoEncoder):
 
 		self.criterion = nn.MSELoss()
 
+
+
 	def forward(self, x: torch.Tensor, adj: torch.Tensor):
 		hidden_features = self.encoder_backbone(x, adj)
 		z = self.fc_z(hidden_features)
@@ -67,10 +68,16 @@ class GraphAutoencoder(BaseGraphAutoEncoder):
 
 		recon_loss = (weight_a * loss_a) + loss_x
 
+		valid_percentage = None
+		if self.hparams.count_valid:
+			valid_percentage = self.calc_valid_perc(x_prime,a_prime)
+
+
 		# Słownik z dodatkowymi wartościami do zalogowania
 		log_dict = {
 			"loss_A": loss_a,
-			"loss_X": loss_x
+			"loss_X": loss_x,
+			"valid_percentage": valid_percentage
 		}
 
 		# Zgodnie z kontraktem, zwracamy 4 rzeczy do klasy bazowej

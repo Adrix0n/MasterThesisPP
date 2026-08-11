@@ -16,7 +16,8 @@ print(f"Liczba elementów: {parts_num}")
 
 
 parser = FramsticksPostProcessor()
-_, parsed_to_f0, _ = parser.process(X_matrix,a_matrix)
+_, parsed_to_f0, _ , tries = parser.process(X_matrix,a_matrix)
 
 print(f"Osobnik przed modyfikacją: {example_f0_individual}")
 print(f"Osobnik po modyfikacji: {parsed_to_f0}")
+print(f"Suma prób: {tries}")

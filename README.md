@@ -3,19 +3,20 @@
   - Wiele odtworzeń
   - Równomierne rozłożenie przykładów
 - [ ] CMA-ES jako r
-- [ ] Badać poziom poprawności dekodowania (przyda się przy wersji z douczaniem)
+- [?] Badać poziom poprawności dekodowania (przyda się przy wersji z douczaniem)
+  - [ ] Poprawić działanie naprawy
 - [ ] Implementacja wersji z douczaniem
   - [ ] 1. W trakcie działania zapisywać genotypy powstające z dekodowania
   - [ ] 2. Jeżeli poziom odtwarzania spadnie poniżej progu, douczyć autoenkoder zapisanymi osobnikami
   - [ ] 3. Po douczeniu uruchamiamy ponownie algorytm ale ze startowego (lub nie) miejsca i wracamy do kroku 1
 - [ ] Dokończyć reimplementacje, weryfikując poprawność reimplementacji
-- [?] Zaimplementować locality loss dla similarity
 - [ ] Slurp, slurm
 - [ ] Wypisać co znajdzie się w wynikach, jakie wykresy itp.
 - [X] Poprawić stratę locality na spearmana
-
+- [?] Zaimplementować locality loss dla similarity
+  - [ ] Zweryfikować, dlaczego przetwarza się niemiłosiernie długo
 # TODO
-- [X] Wygenerowanie zbioru framsticków (ok 29000 patyczaków). Najlepiej równomierny podział na fitnessie
+- [X] Wygenerowanie zbioru framsticków (ok. 29000 patyczaków). Najlepiej równomierny podział na fitnessie
 - [ ] Wybrać recenzenta
 - [ ] Odpowiednia konwersja f0 -> X, A
 - [ ] Odpowiednia konwersja X' A' -> f0

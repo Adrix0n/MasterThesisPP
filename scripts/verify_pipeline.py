@@ -7,6 +7,21 @@ from pyprojroot import here
 from src.models.KlejdaGAE.GraphAutoencoder import GraphAutoencoder
 import yaml
 
+# Konieczne? do modułu frams
+import os
+import sys
+current_dir = os.getcwd()
+framspy_path = os.path.abspath(os.path.join(current_dir, '..', 'external', 'framspy'))
+if framspy_path not in sys.path:
+	sys.path.insert(0, framspy_path)
+with open("../configs/final_evolution_config.yaml", 'r') as f:
+	evolution_config = yaml.safe_load(f)
+import frams
+
+frams.init(
+    evolution_config['frams_path']
+)
+
 project_dir = here()
 # Przygotowanie checkpointów nauczonych autoenkoderów
 checkpoints_dir = project_dir / 'notebooks' / 'checkpoints' / 'final_checkpoints' / 'klejda'
@@ -21,7 +36,7 @@ with open(config_gae_path) as f:
 with open(config_vgae_path) as f:
     config_vgae = yaml.safe_load(f)
 
-gae_non_cyclic = GraphAutoencoder(config=config_gae).double()
+gae_non_cyclic = GraphAutoencoder(config=config_gae, frams_module=frams).double()
 gae_non_cyclic.load_state_dict(checkpoint_gae['state_dict'])
 gae_non_cyclic.eval()
 
@@ -47,7 +62,8 @@ print(f"macierz x_prime: {x_prime}")
 print(f"macierz a_prime: {a_prime}")
 
 parser = FramsticksPostProcessor()
-_, parsed_to_f0, _ = parser.process(x_prime,a_prime)
+_, parsed_to_f0, _ , tries= parser.process(x_prime,a_prime)
 
 print(f"Osobnik przed: {example_f0_individual}")
 print(f"Osobnik po: {parsed_to_f0}")
+print(f"Liczba prób rekonstrukcji: {tries}")

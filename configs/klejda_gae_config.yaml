@@ -28,7 +28,9 @@ decoder_x_dense_features:
 weight_a: 500.0
 kl_weight: 0.007
 
-locality_loss_type: "similarity" # 'fitness', 'parts_num' , 'similarity'
+count_valid: true
+
+locality_loss_type: "fitness" # 'fitness', 'parts_num' , 'similarity'
 locality_loss_method: "spearman" # 'pearson', 'spearman'
 locality_loss_lambda_val: 1.0
 save_dir: "./checkpoints"
