@@ -1,141 +1,199 @@
 import numpy as np
 import networkx as nx
 import torch
+from enum import Flag, auto
 
+class PostProcessFlag(Flag):
+	VALID = 0
+	INVALID_ZERO_LENGTH_JOINTS = auto()
+	INVALID_SUBGROUPS = auto()
+	INVALID_TO_LONG_PARTS = auto()
+	INVALID = auto()  # Set only if max iterations are reached and it cannot be repaired
 
 class FramsticksPostProcessor:
 	def __init__(self, max_joint_length: float = 2.0, max_iterations: int = 100, threshold: float = 0.05,
-				 learning_rate: float = 0.1):
+				 epsilon: float = 1e-5):
 		self.max_len = max_joint_length
 		self.max_it = max_iterations
-		self.threshold = threshold
-		self.lr = learning_rate  # Szybkość łagodnej naprawy
+		self.threshold = threshold  # Próg określający, czy dane połączenie istnieje (1) czy nie istnieje (0_
+		self.epsilon = epsilon
 
 	def process(self, x_prime: torch.Tensor, a_prime: torch.Tensor):
 		x = x_prime.detach().cpu().numpy()
 		a = a_prime.detach().cpu().numpy()
 
+		# binaryzacja macierzy sąsiedztwa
 		a_bin = (a > self.threshold).astype(int)
+		# symetryzacja macierzy
 		a_sym = np.logical_or(a_bin, a_bin.T).astype(int)
+		# Wyzerowanie przekątnej
+		# TODO: Rozważyć, czy powinno wyzerowywać przekątną. Działając w ten sposób, autoenkoder nie będzie zwracał uwagi na to, że tworzy niepoprawne rozwiązanie, bo z jego perspektywy macierz z wyzerowaną przekątną i nie wyzerowaną będzie taka sama
+		np.fill_diagonal(a_sym, 0)
 
+		# wyznaczenie listy istniejących węzłów
+		# Sprawdzany jest każdy wiersz, czy istnieje w nim jakaś jedynka, czyli połączenie z innym
 		existing_nodes = []
 		for i in range(a_sym.shape[0]):
-			if a_sym[i, i] == 1 or np.sum(a_sym[i, :]) > (1 if a_sym[i, i] == 1 else 0):
+			if np.any(a_sym[i, :]):
 				existing_nodes.append(i)
 
-		if len(existing_nodes) == 0:
-			return False, "", None, 0
+		flags = PostProcessFlag.VALID
 
-		node_map = {old_idx: new_idx for new_idx, old_idx in enumerate(existing_nodes)}
+		# Brak węzłów, coś jest nie tak
+		if len(existing_nodes) == 0:
+			return False, "", None, 0, PostProcessFlag.INVALID
 
 		G = nx.Graph()
-		for new_idx, old_idx in enumerate(existing_nodes):
+		node_map = {}  # Słownik tłumaczący indeksy z macierzy na indeksy z listy
+		new_idx = 0
+
+		for old_idx in existing_nodes:
+			node_map[old_idx] = new_idx
+
 			features = x[old_idx].copy()
+
 			G.add_node(
 				new_idx,
 				pos=features[:3],
-				fr=features[3],
-				ing=features[4]
+				fr=features[3] if len(features) > 3 else 0.0,
+				ing=features[4] if len(features) > 4 else 0.0
 			)
+			new_idx += 1
 
+		# Łączenie węzłów
 		for i in existing_nodes:
 			for j in existing_nodes:
+				# Nie dublujemy połączeń poprzez warunek 1 < j
 				if i < j and a_sym[i, j] == 1:
+					# Wykorzystanie słownika mapującego indeksy
 					G.add_edge(node_map[i], node_map[j])
 
-		# 1. Weryfikacja: Zwróć błąd jeśli nie ma dokładnie JEDNEGO połączonego obiektu
+		# Naprawa połączeń o zerowej długości
+		if self._has_zero_length_joints(G):
+			flags |= PostProcessFlag.INVALID_ZERO_LENGTH_JOINTS
+			self._fix_zero_length_joints(G)
+
+		# Naprawa rozdzielonych podgrup
 		if not nx.is_connected(G):
-			return False, "", G, 0
+			flags |= PostProcessFlag.INVALID_SUBGROUPS
+			self._repair_isolated_parts(G)
 
-		self._fix_zero_length_joints(G)
+		# Naprawa zbyt długich połączeń
+		repair_tries = 0
+		if self._has_too_long_joints(G):
+			flags |= PostProcessFlag.INVALID_TO_LONG_PARTS
+			is_successful, repair_tries = self._repair_too_long_joints(G)
+			if not is_successful:
+				flags |= PostProcessFlag.INVALID
 
-		# 2. Łagodna naprawa
-		is_successful, repair_tries = self._soft_repair_joints(G)
+		# Check final validity
+		is_successful = (PostProcessFlag.INVALID not in flags)
 
-		# 3. Jeśli nie udało się naprawić (struktura była zbyt mocno zepsuta) - nie generujemy stringa
 		if is_successful:
 			f0_string = self._generate_f0_string(G)
 		else:
 			f0_string = ""
 
-		return is_successful, f0_string, G, repair_tries
+		return is_successful, f0_string, G, repair_tries, flags
 
-	def _fix_zero_length_joints(self, G: nx.Graph, epsilon: float = 0.01):
+	def _has_zero_length_joints(self, G: nx.Graph) -> bool:
+		for u, v in G.edges():
+			# Norma wektorowa pozycji dwóch węzłów (Zwykła odległość Euklidesowa)
+			if np.linalg.norm(G.nodes[u]['pos'] - G.nodes[v]['pos']) < self.epsilon:
+				return True
+		return False
+
+	def _fix_zero_length_joints(self, G: nx.Graph):
 		for u, v in G.edges():
 			pos_u = G.nodes[u]['pos']
 			pos_v = G.nodes[v]['pos']
-			if np.linalg.norm(pos_u - pos_v) < 1e-5:
-				G.nodes[v]['pos'][0] += epsilon
+			if np.linalg.norm(pos_u - pos_v) < self.epsilon:
+				# Przesunięcie jednego z węzłów o sqrt(3) * epsilon
+				G.nodes[v]['pos'][0] += self.epsilon
+				G.nodes[v]['pos'][1] += self.epsilon
+				G.nodes[v]['pos'][2] += self.epsilon
 
-	def _soft_repair_joints(self, G: nx.Graph) -> tuple[bool, int]:
-		"""
-		Działa jak system fizyczny (force-directed layout). Węzły połączone zbyt
-		długą krawędzią zachowują się jak naciągnięta sprężyna, która je przyciąga.
-		"""
-		for iteration in range(self.max_it):
-			max_current_len = 0.0
-			displacements = {n: np.zeros(3) for n in G.nodes()}
-			needs_repair = False
+	def _repair_isolated_parts(self, G: nx.Graph):
+		groups = list(nx.connected_components(G))
 
-			for u, v in G.edges():
-				pos_u = G.nodes[u]['pos']
-				pos_v = G.nodes[v]['pos']
+		while len(groups) > 1:
+			possible_connections = []
 
-				diff = pos_u - pos_v
+			# Znajduje najkrótsze połączenie pomiędzy rozdzielonymi grupami
+			for i in range(len(groups) - 1):
+				for j in range(i + 1, len(groups)):
+					min_dist = float('inf')
+					best_edge = None
+
+					# Iteracja po węzłach grup w poszukiwaniu najkrótszego odcinka
+					for u in groups[i]:
+						for v in groups[j]:
+							dist = np.linalg.norm(G.nodes[u]['pos'] - G.nodes[v]['pos'])
+							if dist < min_dist:
+								min_dist = dist
+								best_edge = (u, v)
+
+					possible_connections.append((min_dist, i, j, best_edge))
+
+			# Wybór najkrótszego połączenia
+			possible_connections.sort(key=lambda item: item[0])
+			_, i, j, connection = possible_connections[0]
+
+			# Dodanie węzła
+			G.add_edge(*connection)
+
+			# Złączenie grup
+			groups[i] = groups[i].union(groups[j])
+			groups.pop(j)
+
+	def _has_too_long_joints(self, G: nx.Graph) -> bool:
+		return len(self._find_too_long_joints(G)) > 0
+
+	def _find_too_long_joints(self, G: nx.Graph) -> list:
+		too_long = []
+		for u, v in G.edges():
+			if np.linalg.norm(G.nodes[u]['pos'] - G.nodes[v]['pos']) > self.max_len:
+				too_long.append((u, v))
+		return too_long
+
+	def _repair_too_long_joints(self, G: nx.Graph) -> tuple[bool, int]:
+		counter = 0
+		too_long_joints = self._find_too_long_joints(G)
+
+		while len(too_long_joints) > 0 and counter < self.max_it:
+			for p1, p2 in too_long_joints:
+				# Wybierana jest część o mniejszej liczbie punktów
+				if G.degree(p1) <= G.degree(p2):
+					p_less, p_more = p1, p2
+				else:
+					p_less, p_more = p2, p1
+
+				pos_less = G.nodes[p_less]['pos']
+				pos_more = G.nodes[p_more]['pos']
+
+				diff = pos_more - pos_less
 				dist = np.linalg.norm(diff)
 
-				if dist > max_current_len:
-					max_current_len = dist
-
+				# Przemieszczenie w stronę centrum
 				if dist > self.max_len:
-					needs_repair = True
-					excess = dist - self.max_len
-					direction = diff / (dist + 1e-9)  # Kierunek od v do u
+					excess = dist - self.max_len + 1e-5 # Dodanie małej części aby 'przestrzelić' i na pewno zmniejszyć odległość do mniejszej niż
+					direction = diff / (dist + 1e-9)
+					G.nodes[p_less]['pos'] = pos_less + (direction * excess)
 
-					# Węzły o mniejszej liczbie połączeń (np. końcówki ramion) stawiają
-					# mniejszy opór i przesuwają się bardziej niż centralne węzły.
-					deg_u = G.degree(u)
-					deg_v = G.degree(v)
-					total_deg = deg_u + deg_v
+			counter += 1
+			too_long_joints = self._find_too_long_joints(G)
 
-					weight_u = deg_v / total_deg
-					weight_v = deg_u / total_deg
-
-					# Łagodna siła przyciągania z uwzględnieniem "masy" i learning rate
-					step_u = -direction * excess * self.lr * weight_u
-					step_v = direction * excess * self.lr * weight_v
-
-					displacements[u] += step_u
-					displacements[v] += step_v
-
-			if not needs_repair:
-				return True, iteration  # Naprawa się powiodła przed wyczerpaniem limitu!
-
-			# Symultaniczna aktualizacja wszystkich pozycji (zapobiega konfliktom)
-			for n in G.nodes():
-				G.nodes[n]['pos'] += displacements[n]
-
-		# Weryfikacja końcowa - po wyczerpaniu limitu iteracji, czy odległości są znośne?
-		# Dodajemy drobną tolerancję błędu floatów (1e-4)
-		if len(G.edges()) > 0:
-			final_max_len = max([np.linalg.norm(G.nodes[u]['pos'] - G.nodes[v]['pos']) for u, v in G.edges()])
-		else:
-			final_max_len = 0.0
-
-		if final_max_len <= self.max_len + 1e-4:
-			return True, self.max_it
-
-		# Jeżeli pomimo 100 łagodnych ruchów kształt nadal jest niefizyczny - poddajemy się.
-		return False, self.max_it
+		# jeżeli po wszystkich iteracjach cały czas są problemy, to zwracamy jako invalid
+		is_successful = len(too_long_joints) == 0
+		return is_successful, counter
 
 	def _generate_f0_string(self, G: nx.Graph) -> str:
 		lines = ["//0"]
 		for i in range(len(G.nodes)):
-			pos = G.nodes[i]['pos']
+			self.pos_ = G.nodes[i]['pos']
+			pos = self.pos_
 			fr = G.nodes[i]['fr']
 			ing = G.nodes[i]['ing']
-
-			# Formatujemy floaty by uniknąć bardzo długich ciągów liczb
 			lines.append(f"p:{pos[0]:.3f}, {pos[1]:.3f}, {pos[2]:.3f}, fr={fr:.3f}, ing={ing:.3f}")
 
 		for u, v in G.edges():

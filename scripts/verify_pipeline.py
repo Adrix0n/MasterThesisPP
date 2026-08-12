@@ -62,7 +62,7 @@ print(f"macierz x_prime: {x_prime}")
 print(f"macierz a_prime: {a_prime}")
 
 parser = FramsticksPostProcessor()
-_, parsed_to_f0, _ , tries= parser.process(x_prime,a_prime)
+_, parsed_to_f0, _ , tries, _= parser.process(x_prime,a_prime)
 
 print(f"Osobnik przed: {example_f0_individual}")
 print(f"Osobnik po: {parsed_to_f0}")

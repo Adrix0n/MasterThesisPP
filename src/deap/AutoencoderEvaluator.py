@@ -24,7 +24,7 @@ class AutoencoderEvaluator:
 		a_prime.squeeze_()
 
 		# Konwersja macierzy do reprezentacji genotypowej
-		is_valid_reconstruct , new_framsticks_genotype, _, _ = self.postProcessor.process(x_prime, a_prime)
+		is_valid_reconstruct, new_framsticks_genotype, _, _, flags = self.postProcessor.process(x_prime, a_prime)
 
 		if type(new_framsticks_genotype) is not list:
 			new_framsticks_genotype = [new_framsticks_genotype]

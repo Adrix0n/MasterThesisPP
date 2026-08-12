@@ -4,7 +4,7 @@
   - Równomierne rozłożenie przykładów
 - [X] CMA-ES jako r
 - [X] Badać poziom poprawności dekodowania (przyda się przy wersji z douczaniem)
-  - [ ] Poprawić działanie naprawy
+  - [X] Poprawić działanie naprawy
 - [ ] Implementacja wersji z douczaniem
   - [ ] 1. W trakcie działania zapisywać genotypy powstające z dekodowania
   - [ ] 2. Jeżeli poziom odtwarzania spadnie poniżej progu, douczyć autoenkoder zapisanymi osobnikami
@@ -50,5 +50,12 @@ Zwykły i wariacyjny:
 Łącznie: 1 + 2 * 3 * 3 = 19
 
 > Obliczać również czas i warunkować eksperyment czasem przetwarzania
+
+# Wizualizacje, grafiki, wykresy itp.
+1. Zbiór uczący
+   2. Tabela z rozkładem wysokości, liczby części
+   3. Histogram z rozkładu wysokości i liczby części
+   4. Dodatkowe informacje, w tym np. liczba uruchomień, sposób generacji zbioru
+2. 
 
 # Dodatkowe informacje

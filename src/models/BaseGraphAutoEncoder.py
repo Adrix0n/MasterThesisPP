@@ -155,9 +155,8 @@ class BaseGraphAutoEncoder(pl.LightningModule):
 			valid_count = 0
 			tries_counter = 0
 			for i in range(count):
-				repair_tries, _, _ = self.post_processor.process(x_prime[i], y_prime[i])
+				_, _, _, repair_tries, _ = self.post_processor.process(x_prime[i], y_prime[i])
 				tries_counter += repair_tries
 				if repair_tries < self.post_processor.max_it:
 					valid_count += 1
-			print(valid_count, count, tries_counter)
 			return valid_count / float(count)
