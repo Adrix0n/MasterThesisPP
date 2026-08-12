@@ -4,21 +4,20 @@ sim_file: "eval-allcriteria.sim;deterministic.sim;sample-period-2.sim;only-body.
 opt_criteria:
   - "vertpos"
 
-pop_size: 300
-generations: 150
-tournament_size: 10
-p_mut: 0.2
-p_xov: 0.1
-hof_size: 10
+pop_size: 150
+generations: 400
+tournament_size: 4
+p_mut: 0.9
+p_xov: 0.0
+hof_size: 1
 
 genformat: "0"
 initial_genotype: null
 
-max_numparts: 25
-max_numjoints: 25
+max_numparts: 15
+max_numjoints: 15
 max_numneurons: null
 max_numconnections: null
 max_numgenochars: null
 
-result_filepath: "../results/sampled_individuals_better.jsonl"
-sampling_fraction: 0.4
+result_filepath: "../results/sampled_best_individuals.jsonl"

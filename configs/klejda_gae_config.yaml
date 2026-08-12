@@ -1,6 +1,6 @@
 # Konfiguracja autoenkodera
 in_channels: 5
-max_nodes: 25
+max_nodes: 15
 #latent_dim: 16 # 3, 10, 15
 latent_dim: 3
 learning_rate: 0.01
