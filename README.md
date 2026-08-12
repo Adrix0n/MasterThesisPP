@@ -2,8 +2,8 @@
 - [ ] Wygenerować lepszy zbiór framsticków (taki, w którym bierzemy osobników z hall of fame dla każdej ?epoki?)
   - Wiele odtworzeń
   - Równomierne rozłożenie przykładów
-- [ ] CMA-ES jako r
-- [?] Badać poziom poprawności dekodowania (przyda się przy wersji z douczaniem)
+- [X] CMA-ES jako r
+- [X] Badać poziom poprawności dekodowania (przyda się przy wersji z douczaniem)
   - [ ] Poprawić działanie naprawy
 - [ ] Implementacja wersji z douczaniem
   - [ ] 1. W trakcie działania zapisywać genotypy powstające z dekodowania
@@ -12,6 +12,7 @@
 - [ ] Dokończyć reimplementacje, weryfikując poprawność reimplementacji
 - [ ] Slurp, slurm
 - [ ] Wypisać co znajdzie się w wynikach, jakie wykresy itp.
+  - [ ] Wizualizacje ?
 - [X] Poprawić stratę locality na spearmana
 - [?] Zaimplementować locality loss dla similarity
   - [ ] Zweryfikować, dlaczego przetwarza się niemiłosiernie długo

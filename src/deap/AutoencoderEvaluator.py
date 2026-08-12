@@ -1,6 +1,7 @@
 import torch
 from utils.FramsticksPostProcessor import FramsticksPostProcessor
 from src.deap.native_operators import frams_evaluate
+from src.deap.constraints import FITNESS_VALUE_INFEASIBLE_SOLUTION
 
 
 class AutoencoderEvaluator:
@@ -23,7 +24,7 @@ class AutoencoderEvaluator:
 		a_prime.squeeze_()
 
 		# Konwersja macierzy do reprezentacji genotypowej
-		_, new_framsticks_genotype, _, _ = self.postProcessor.process(x_prime, a_prime)
+		is_valid_reconstruct , new_framsticks_genotype, _, _ = self.postProcessor.process(x_prime, a_prime)
 
 		if type(new_framsticks_genotype) is not list:
 			new_framsticks_genotype = [new_framsticks_genotype]
@@ -31,4 +32,10 @@ class AutoencoderEvaluator:
 		# Ewaluacja genotypu w środowisku Framsticks
 		fitness_tuple = self.frams_evaluate(self.frams_lib,self.opt_criteria,self.config, new_framsticks_genotype)
 
-		return fitness_tuple
+		is_valid_frams_evaluate = True
+		for fitness in fitness_tuple:
+			if fitness == FITNESS_VALUE_INFEASIBLE_SOLUTION:
+				is_valid_frams_evaluate = False
+				break
+
+		return fitness_tuple, is_valid_reconstruct, is_valid_frams_evaluate
