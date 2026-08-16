@@ -1,5 +1,5 @@
 # TODO 2
-- [ ] Wygenerować lepszy zbiór framsticków (taki, w którym bierzemy osobników z hall of fame dla każdej ?epoki?)
+- [X] Wygenerować lepszy zbiór framsticków (taki, w którym bierzemy osobników z hall of fame dla każdej ?epoki?)
   - Wiele odtworzeń
   - Równomierne rozłożenie przykładów
 - [X] CMA-ES jako r

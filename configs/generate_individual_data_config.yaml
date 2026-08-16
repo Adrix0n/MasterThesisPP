@@ -4,8 +4,8 @@ sim_file: "eval-allcriteria.sim;deterministic.sim;sample-period-2.sim;only-body.
 opt_criteria:
   - "vertpos"
 
-pop_size: 150
-generations: 400
+pop_size: 140
+generations: 300
 tournament_size: 4
 p_mut: 0.9
 p_xov: 0.0

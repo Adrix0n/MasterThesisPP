@@ -68,16 +68,10 @@ class GraphAutoencoder(BaseGraphAutoEncoder):
 
 		recon_loss = (weight_a * loss_a) + loss_x
 
-		valid_percentage = None
-		if self.hparams.count_valid:
-			valid_percentage = self.calc_valid_perc(x_prime,a_prime)
-
-
 		# Słownik z dodatkowymi wartościami do zalogowania
 		log_dict = {
 			"loss_A": loss_a,
 			"loss_X": loss_x,
-			"valid_percentage": valid_percentage
 		}
 
 		# Zgodnie z kontraktem, zwracamy 4 rzeczy do klasy bazowej

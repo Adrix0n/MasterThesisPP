@@ -31,6 +31,6 @@ kl_weight: 0.007
 count_valid: true
 
 locality_loss_type: "fitness" # 'fitness', 'parts_num' , 'similarity'
-locality_loss_method: "spearman" # 'pearson', 'spearman'
-locality_loss_lambda_val: 1.0
+locality_loss_method: "pearson" # 'pearson', 'spearman'
+locality_loss_lambda_val: 3.0
 save_dir: "./checkpoints"

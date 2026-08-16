@@ -20,7 +20,8 @@ def save_genotypes_json(filename, hof):
         entry = {
             "id": start_id + idx,
             "fitness": list(ind.fitness.values),
-            "genotype": ind[0]
+            "genotype": getattr(ind, "genotype", ""),
+            "latent_vector": list(ind)
         }
         data.append(entry)
 

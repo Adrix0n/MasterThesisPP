@@ -38,4 +38,7 @@ class AutoencoderEvaluator:
 				is_valid_frams_evaluate = False
 				break
 
-		return fitness_tuple, is_valid_reconstruct, is_valid_frams_evaluate
+		if type(new_framsticks_genotype) is list:
+			new_framsticks_genotype = new_framsticks_genotype[0]
+
+		return fitness_tuple, is_valid_reconstruct, is_valid_frams_evaluate, new_framsticks_genotype

@@ -5,9 +5,9 @@ sim_file: "eval-allcriteria.sim;deterministic.sim;sample-period-2.sim;only-body.
 opt_criteria:
   - "vertpos"
 
-pop_size: 120
+pop_size: 140
 generations: 100
-tournament_size: 5
+tournament_size: 4
 p_mut: 0.9
 p_xov: 0.0
 hof_size: 10
@@ -27,5 +27,5 @@ result_filepath: "../results/test_experiment_result.json"
 
 # CMA-ES
 latent_dim: 3   # Taki sam jak przy treningu (potrzebne do CMA-ES)
-sigma: 5.0      # Początkowe odchylenie standardowe
+sigma: 0.2    # Początkowe odchylenie standardowe
 centroid: 0.0   # Środek rozkładu

@@ -91,7 +91,7 @@ def main():
 		config = yaml.safe_load(f)
 
 	# Liczba przetwarzań (eksperymentów)
-	num_runs = 31
+	num_runs = 20
 
 	# Przygotowanie argumentów dla każdego procesu (ID procesu od 1 do 20, konfiguracja)
 	tasks = [(i, config) for i in range(1, num_runs + 1)]

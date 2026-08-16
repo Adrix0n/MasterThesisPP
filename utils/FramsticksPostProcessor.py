@@ -11,7 +11,7 @@ class PostProcessFlag(Flag):
 	INVALID = auto()  # Set only if max iterations are reached and it cannot be repaired
 
 class FramsticksPostProcessor:
-	def __init__(self, max_joint_length: float = 2.0, max_iterations: int = 100, threshold: float = 0.05,
+	def __init__(self, max_joint_length: float = 2.0, max_iterations: int = 100, threshold: float = 0.5,
 				 epsilon: float = 1e-5):
 		self.max_len = max_joint_length
 		self.max_it = max_iterations
