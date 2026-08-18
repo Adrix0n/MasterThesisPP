@@ -2,7 +2,7 @@ import torch
 from utils.FramsticksPostProcessor import FramsticksPostProcessor
 from src.deap.native_operators import frams_evaluate
 from src.deap.constraints import FITNESS_VALUE_INFEASIBLE_SOLUTION
-
+import numpy as np
 
 class AutoencoderEvaluator:
 	def __init__(self, autoencoder,frams_lib, opt_criteria, config):
@@ -32,13 +32,23 @@ class AutoencoderEvaluator:
 		# Ewaluacja genotypu w środowisku Framsticks
 		fitness_tuple = self.frams_evaluate(self.frams_lib,self.opt_criteria,self.config, new_framsticks_genotype)
 
+		# Kara za oddalenie się od miejsca początkowego
+		distance_from_zero = np.linalg.norm(latent_vector)
+		penalty = 0
+		# if distance_from_zero > 15:
+		# 	penalty = (distance_from_zero - 15) * 10
+
+
 		is_valid_frams_evaluate = True
-		for fitness in fitness_tuple:
-			if fitness == FITNESS_VALUE_INFEASIBLE_SOLUTION:
+		fitness_tuple = list(fitness_tuple)
+		for i in range(len(fitness_tuple)):
+			if fitness_tuple[i] == FITNESS_VALUE_INFEASIBLE_SOLUTION:
 				is_valid_frams_evaluate = False
 				break
+			fitness_tuple[i] -= penalty
+		fitness_tuple = tuple(fitness_tuple)
 
 		if type(new_framsticks_genotype) is list:
 			new_framsticks_genotype = new_framsticks_genotype[0]
 
-		return fitness_tuple, is_valid_reconstruct, is_valid_frams_evaluate, new_framsticks_genotype
+		return fitness_tuple, is_valid_reconstruct, is_valid_frams_evaluate, new_framsticks_genotype, flags
