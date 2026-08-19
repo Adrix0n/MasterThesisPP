@@ -12,7 +12,7 @@ class DecoderA(nn.Module):
 			self,
 			latent_dim: int,
 			hidden_dims: List[int],
-			max_nodes: int = 15
+			max_nodes: int
 	):
 		super().__init__()
 		self.max_nodes = max_nodes

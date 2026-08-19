@@ -14,8 +14,8 @@ class DecoderX(nn.Module):
 			latent_dim: int,
 			conv_channels: List[int],
 			dense_features: List[int],
-			out_features: int = 3,
-			max_nodes: int = 15
+			out_features: int,
+			max_nodes: int
 	):
 		super().__init__()
 		self.max_nodes = max_nodes

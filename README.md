@@ -5,10 +5,10 @@
 - [X] CMA-ES jako r
 - [X] Badać poziom poprawności dekodowania (przyda się przy wersji z douczaniem)
   - [X] Poprawić działanie naprawy
-- [ ] Implementacja wersji z douczaniem
-  - [ ] 1. W trakcie działania zapisywać genotypy powstające z dekodowania
-  - [ ] 2. Jeżeli poziom odtwarzania spadnie poniżej progu, douczyć autoenkoder zapisanymi osobnikami
-  - [ ] 3. Po douczeniu uruchamiamy ponownie algorytm ale ze startowego (lub nie) miejsca i wracamy do kroku 1
+- [X] Implementacja wersji z douczaniem
+  - [X] 1. W trakcie działania zapisywać genotypy powstające z dekodowania
+  - [X] 2. Jeżeli poziom odtwarzania spadnie poniżej progu, douczyć autoenkoder zapisanymi osobnikami
+  - [X] 3. Po douczeniu uruchamiamy ponownie algorytm ale ze startowego (lub nie) miejsca i wracamy do kroku 1
 - [ ] Dokończyć reimplementacje, weryfikując poprawność reimplementacji
 - [ ] Slurp, slurm
 - [ ] Wypisać co znajdzie się w wynikach, jakie wykresy itp.
