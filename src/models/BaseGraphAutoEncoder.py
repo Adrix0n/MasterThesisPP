@@ -38,27 +38,42 @@ class BaseGraphAutoEncoder(pl.LightningModule):
 
 	# Korelacja Spearmana określa monotoniczność zależności (zakres -1.0 ... 1.0)
 	# Podstawowy Spearman jest nieróżniczkowalny,
-	def _spearman_correlation(self, x: torch.Tensor, y: torch.Tensor, epsilon: float = 1e-6):
+	def _spearman_correlation(self, x: torch.Tensor, y: torch.Tensor):
+		# Zakładam, że korelacja jest liczona wzdłuż ostatniego wymiaru (dim=-1)
+
 		with torch.no_grad():
-			rank_y = y.argsort().argsort().float()
-		x_sorted, _ = torch.sort(x.detach())
+			# Rangi dla y (ground truth)
+			rank_y = y.argsort(dim=-1).argsort(dim=-1).float()
 
-		idx = torch.searchsorted(x_sorted, x.detach())
+			# Przygotowanie posortowanego x bez gradientu
+			x_detached = x.detach()
+			x_sorted, _ = torch.sort(x_detached, dim=-1)
 
-		idx_left = torch.clamp(idx - 1, min=0, max=x.size(0) - 2)
-		idx_right = idx_left + 1
+			# Szukanie indeksów
+			idx = torch.searchsorted(x_sorted, x_detached)
+			idx_left = torch.clamp(idx - 1, min=0, max=x.size(-1) - 2)
+			idx_right = idx_left + 1
 
-		val_left = x_sorted[idx_left]
-		val_right = x_sorted[idx_right]
+		# Zbieranie wartości przy użyciu gather - to jest KONIECZNE przy
+		# wielowymiarowych tensorach (batchach), zwykłe indeksowanie tu polegnie!
+		val_left = torch.gather(x_sorted, -1, idx_left)
+		val_right = torch.gather(x_sorted, -1, idx_right)
 
-		diff = torch.clamp(val_right - val_left, min=epsilon)
+		diff = val_right - val_left
 
-		fraction = (x - val_left) / diff
-		fraction = torch.clamp(fraction, 0.0, 1.0)
+		# CZYSTE ROZWIĄZANIE PROBLEMU Z EPSILONEM:
+		# Jeśli diff jest większe od zera, liczymy ułamek normalnie.
+		# Jeśli diff == 0 (wartości są identyczne), ułamek to po prostu 0.
+		fraction = torch.where(
+			diff > 1e-6,
+			(x - val_left) / (diff + 1e-8),  # +1e-8 chroni przed problemami precyzji float
+			torch.zeros_like(x)
+		)
 
 		rank_x = idx_left.float() + fraction
 
-		return self._pearson_correlation(rank_x,rank_y)
+		return self._pearson_correlation(rank_x, rank_y)
+
 
 
 	def configure_optimizers(self):

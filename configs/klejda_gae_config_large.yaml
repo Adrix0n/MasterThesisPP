@@ -1,0 +1,51 @@
+# Konfiguracja autoenkodera
+in_channels: 5
+max_nodes: 15
+#latent_dim: 16 # 3, 10, 15
+latent_dim: 100
+learning_rate: 0.01
+
+encoder_conv_channels: # 4 warstwy conv (maksimum)
+  - 16
+  - 32
+  - 64
+  - 128
+
+encoder_dense_features: # 7 warstw dense (maksimum)
+  - 1024
+  - 512
+  - 256
+  - 128
+  - 64
+  - 32
+  - 16
+
+decoder_a_hidden_dims: # 5 warstw dense (maksimum)
+  - 16
+  - 32
+  - 64
+  - 128
+  - 256
+
+decoder_x_conv_channels: # 2 warstwy conv (maksimum)
+  - 32
+  - 16
+
+decoder_x_dense_features: # 7 warstw dense (maksimum)
+  - 16
+  - 32
+  - 64
+  - 128
+  - 256
+  - 512
+  - 1024
+
+weight_a: 300.0
+kl_weight: 0.007
+
+count_valid: true
+
+locality_loss_type: "fitness" # 'fitness', 'parts_num' , 'similarity'
+locality_loss_method: "spearman" # 'pearson', 'spearman'
+locality_loss_lambda_val: 1.0
+save_dir: "./checkpoints"

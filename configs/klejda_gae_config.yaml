@@ -2,7 +2,7 @@
 in_channels: 5
 max_nodes: 15
 #latent_dim: 16 # 3, 10, 15
-latent_dim: 10
+latent_dim: 3
 learning_rate: 0.01
 
 encoder_conv_channels: # od 1 do 4 warstw conv
@@ -25,7 +25,7 @@ decoder_x_dense_features: # od 1 do 7 warstw
   - 64
   - 128
 
-weight_a: 1000.0
+weight_a: 500.0
 kl_weight: 0.007
 
 count_valid: true
