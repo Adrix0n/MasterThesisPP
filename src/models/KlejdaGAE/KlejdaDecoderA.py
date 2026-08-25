@@ -1,9 +1,9 @@
 import torch
 import torch.nn as nn
 from typing import List
-from src.models.KlejdaGAE.DenseLayer import DenseLayer
+from src.models.KlejdaGAE.KlejdaDenseLayer import KlejdaDenseLayer
 
-class DecoderA(nn.Module):
+class KlejdaDecoderA(nn.Module):
 	"""
 	Dekoder odtwarzający macierz sąsiedztwa A'.
 	"""
@@ -22,7 +22,7 @@ class DecoderA(nn.Module):
 
 		for out_features in hidden_dims:
 			self.denses.append(
-				DenseLayer(
+				KlejdaDenseLayer(
 					in_features=current_in_features,
 					out_features=out_features,
 					activation='relu'

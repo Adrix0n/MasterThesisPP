@@ -1,10 +1,10 @@
 import torch
 import torch.nn as nn
 from typing import List
-from src.models.KlejdaGAE.ConvLayer import ConvLayer
-from src.models.KlejdaGAE.DenseLayer import DenseLayer
+from src.models.KlejdaGAE.KlejdaConvLayer import KlejdaConvLayer
+from src.models.KlejdaGAE.KlejdaDenseLayer import KlejdaDenseLayer
 
-class Encoder(nn.Module):
+class KlejdaEncoder(nn.Module):
 	"""
 	Enkoder
 	"""
@@ -24,7 +24,7 @@ class Encoder(nn.Module):
 
 		for out_channels in conv_channels:
 			self.convs.append(
-				ConvLayer(current_in_channels, out_channels)
+				KlejdaConvLayer(current_in_channels, out_channels)
 			)
 			current_in_channels = out_channels
 
@@ -35,7 +35,7 @@ class Encoder(nn.Module):
 
 		for out_features in dense_features:
 			self.denses.append(
-				DenseLayer(current_in_features, out_features)
+				KlejdaDenseLayer(current_in_features, out_features)
 			)
 			current_in_features = out_features
 

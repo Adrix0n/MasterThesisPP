@@ -1,10 +1,10 @@
 import torch
 import torch.nn as nn
 from typing import List
-from src.models.KlejdaGAE.DenseLayer import DenseLayer
-from src.models.KlejdaGAE.ConvLayer import ConvLayer
+from src.models.KlejdaGAE.KlejdaDenseLayer import KlejdaDenseLayer
+from src.models.KlejdaGAE.KlejdaConvLayer import KlejdaConvLayer
 
-class DecoderX(nn.Module):
+class KlejdaDecoderX(nn.Module):
 	"""
 	Dekoder odtwarzający macierz X'
 	"""
@@ -28,7 +28,7 @@ class DecoderX(nn.Module):
 
 		for out_channels in conv_channels:
 			self.convs.append(
-				ConvLayer(
+				KlejdaConvLayer(
 					in_channels=current_in_channels,
 					out_channels=out_channels,
 					activation='relu'
@@ -43,7 +43,7 @@ class DecoderX(nn.Module):
 
 		for out_feat in dense_features:
 			self.denses.append(
-				DenseLayer(
+				KlejdaDenseLayer(
 					in_features=current_in_features,
 					out_features=out_feat,
 					activation='relu'

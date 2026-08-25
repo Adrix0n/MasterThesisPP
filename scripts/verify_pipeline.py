@@ -4,7 +4,8 @@ import torch
 from utils.FramsticksGraphDataset import FramsticksGraphDataset
 from utils.FramsticksPostProcessor import FramsticksPostProcessor
 from pyprojroot import here
-from src.models.KlejdaGAE.GraphAutoencoder import GraphAutoencoder
+from src.models.KlejdaGAE.KlejdaGraphAutoencoder import KlejdaGraphAutoencoder
+from src.models.NewGAE.GraphAutoencoder import GraphAutoencoder
 import yaml
 
 # Konieczne? do modułu frams
@@ -25,18 +26,20 @@ frams.init(
 project_dir = here()
 # Przygotowanie checkpointów nauczonych autoenkoderów
 checkpoints_dir = project_dir / 'notebooks' / 'checkpoints' / 'final_checkpoints' / 'klejda'
+new_checkpoints_dir = project_dir / 'notebooks' / 'checkpoints' / 'final_checkpoints' / 'new'
 checkpoint_gae = torch.load(checkpoints_dir / 'gae.ckpt')
 checkpoint_vgae = torch.load(checkpoints_dir / 'vgae.ckpt')
 # Przygotowanie konfiguracji dla gae
 configs_dir = project_dir / 'configs'
-config_gae_path = configs_dir / 'klejda_gae_config.yaml'
-config_vgae_path = configs_dir / 'klejda_vgae_config.yaml'
+config_gae_path = configs_dir / 'gae_config.yaml'
+config_vgae_path = configs_dir / 'vgae_config.yaml'
+
 with open(config_gae_path) as f:
     config_gae = yaml.safe_load(f)
 with open(config_vgae_path) as f:
     config_vgae = yaml.safe_load(f)
 
-gae_non_cyclic = GraphAutoencoder(config=config_gae, frams_module=frams).double()
+gae_non_cyclic = KlejdaGraphAutoencoder(config=config_gae, frams_module=frams).double()
 gae_non_cyclic.load_state_dict(checkpoint_gae['state_dict'])
 gae_non_cyclic.eval()
 

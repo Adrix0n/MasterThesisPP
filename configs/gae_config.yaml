@@ -1,0 +1,54 @@
+in_channels: 5
+latent_dim: 15
+learning_rate: 0.01
+max_nodes: 15
+
+# Dense layer
+dense_use_norm: true
+dense_activation: "silu" # relu, gelu, elu, tanh, none, leaky_relu. silu
+dense_dropout_rate: 0.2
+
+# Conv Layer
+conv_use_norm: true
+conv_activation: "silu" # relu, gelu, elu, tanh, none, leaky_relu. silu
+conv_dropout_rate: 0.2
+conv_type: "dense_gin_conv" # dense_gcn_conv, dense_gin_conv
+
+# Encoder
+encoder_use_mlp: true
+encoder_mlp_out_features: 32
+
+
+# Decoder A
+decoder_mlp_out_features: 15
+
+
+encoder_conv_channels: # od 1 do 4 warstw conv
+  - 16
+  - 32
+
+encoder_dense_features: # od 2 do 7 warstw dense
+  - 128
+  - 64
+
+decoder_a_hidden_dims: # od 1 do 5 warstw dense
+  - 64
+  - 128
+
+decoder_x_conv_channels: # od 1 do 2 warstw
+  - 32
+  - 16
+
+decoder_x_dense_features: # od 1 do 7 warstw
+  - 64
+  - 128
+
+weight_a: 500.0
+kl_weight: 0.007
+
+count_valid: true # Czy to istnieje?
+
+locality_loss_type: "fitness" # 'fitness', 'parts_num' , 'similarity'
+locality_loss_method: "spearman" # 'pearson', 'spearman'
+locality_loss_lambda_val: 1.0
+save_dir: "./checkpoints"

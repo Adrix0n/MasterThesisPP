@@ -1,5 +1,6 @@
-import torch
 import torch.nn as nn
+import torch
+
 
 class DenseLayer(nn.Module):
 	"""
@@ -10,16 +11,15 @@ class DenseLayer(nn.Module):
 			self,
 			in_features: int,
 			out_features: int,
-			activation: str = 'relu',
+			activation: str = 'silu',
 			use_norm: bool = True,
-			dropout_rate: float = 0.0
-	):
+			dropout_rate: float = 0.0):
 		super().__init__()
 
-		self.linear = nn.Linear(in_features, out_features)
+		self.linear = nn.Linear(in_features=in_features, out_features=out_features)
 
 		if use_norm:
-			self.norm = nn.LayerNorm(out_features)
+			self.norm = nn.BatchNorm1d(out_features)
 		else:
 			self.norm = nn.Identity()
 
@@ -34,6 +34,10 @@ class DenseLayer(nn.Module):
 			self.act = nn.Tanh()
 		elif activation_lower in ['none', 'linear']:
 			self.act = nn.Identity()
+		elif activation_lower == 'leaky_relu':
+			self.act = nn.LeakyReLU()
+		elif activation_lower == 'silu':
+			self.act = nn.SiLU()
 		else:
 			raise ValueError(
 				f"Nieobsługiwana funkcja aktywacji: {activation}. Wybierz spośród: relu, gelu, elu, tanh, none."

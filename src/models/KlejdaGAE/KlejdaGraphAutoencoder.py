@@ -3,11 +3,11 @@ import torch.nn as nn
 import pytorch_lightning as pl
 import torch.optim as optim
 from typing import Dict, Any
-from src.models.KlejdaGAE.Encoder import Encoder
-from src.models.KlejdaGAE.DecoderA import DecoderA
-from src.models.KlejdaGAE.DecoderX import DecoderX
+from src.models.KlejdaGAE.KlejdaEncoder import KlejdaEncoder
+from src.models.KlejdaGAE.KlejdaDecoderA import KlejdaDecoderA
+from src.models.KlejdaGAE.KlejdaDecoderX import KlejdaDecoderX
 from src.models.BaseGraphAutoEncoder import BaseGraphAutoEncoder
-class GraphAutoencoder(BaseGraphAutoEncoder):
+class KlejdaGraphAutoencoder(BaseGraphAutoEncoder):
 	"""
 	Pełny model Grafowego Autoenkodera (GAE) zaimplementowany w PyTorch Lightning.
 	"""
@@ -16,7 +16,7 @@ class GraphAutoencoder(BaseGraphAutoEncoder):
 		super().__init__(config, frams_module)
 
 		# Inicjalizacja Enkodera
-		self.encoder_backbone = Encoder(
+		self.encoder_backbone = KlejdaEncoder(
 			in_channels=self.hparams.in_channels,
 			conv_channels=self.hparams.encoder_conv_channels,
 			dense_features=self.hparams.encoder_dense_features,
@@ -27,14 +27,14 @@ class GraphAutoencoder(BaseGraphAutoEncoder):
 		self.fc_z = nn.Linear(self.encoder_backbone.output_dim, self.hparams.latent_dim)
 
 		# Inicjalizacja Dekodera A
-		self.decoder_a = DecoderA(
+		self.decoder_a = KlejdaDecoderA(
 			latent_dim=self.hparams.latent_dim,
 			hidden_dims=self.hparams.decoder_a_hidden_dims,
 			max_nodes=self.hparams.max_nodes
 		)
 
 		# Inicjalizacja Dekodera X
-		self.decoder_x = DecoderX(
+		self.decoder_x = KlejdaDecoderX(
 			latent_dim=self.hparams.latent_dim,
 			conv_channels=self.hparams.decoder_x_conv_channels,
 			dense_features=self.hparams.decoder_x_dense_features,

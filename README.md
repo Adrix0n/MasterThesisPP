@@ -7,9 +7,11 @@
   - [ ] Wizualizacje ?
 - [?] Zaimplementować locality loss dla similarity
   - [ ] Zweryfikować, dlaczego przetwarza się niemiłosiernie długo
+  - [ ] Dropout
 # TODO
 - [ ] Własna implementacja
   - [ ] Własna warstwa gęsta
+    - [ ]
   - [ ] Własna warstwa konwolucyjna
   - [ ] Własny enkoder
   - [ ] Własny dekoder

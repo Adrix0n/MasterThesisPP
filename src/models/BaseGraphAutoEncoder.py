@@ -2,6 +2,7 @@ import pytorch_lightning as pl
 from typing import Dict, Any, Tuple
 import torch.optim as optim
 import torch
+import torch.nn as nn
 import os
 import sys
 current_dir = os.getcwd()
@@ -39,31 +40,21 @@ class BaseGraphAutoEncoder(pl.LightningModule):
 	# Korelacja Spearmana określa monotoniczność zależności (zakres -1.0 ... 1.0)
 	# Podstawowy Spearman jest nieróżniczkowalny,
 	def _spearman_correlation(self, x: torch.Tensor, y: torch.Tensor):
-		# Zakładam, że korelacja jest liczona wzdłuż ostatniego wymiaru (dim=-1)
-
 		with torch.no_grad():
-			# Rangi dla y (ground truth)
 			rank_y = y.argsort(dim=-1).argsort(dim=-1).float()
 
-			# Przygotowanie posortowanego x bez gradientu
 			x_detached = x.detach()
 			x_sorted, _ = torch.sort(x_detached, dim=-1)
 
-			# Szukanie indeksów
 			idx = torch.searchsorted(x_sorted, x_detached)
 			idx_left = torch.clamp(idx - 1, min=0, max=x.size(-1) - 2)
 			idx_right = idx_left + 1
 
-		# Zbieranie wartości przy użyciu gather - to jest KONIECZNE przy
-		# wielowymiarowych tensorach (batchach), zwykłe indeksowanie tu polegnie!
 		val_left = torch.gather(x_sorted, -1, idx_left)
 		val_right = torch.gather(x_sorted, -1, idx_right)
 
 		diff = val_right - val_left
 
-		# CZYSTE ROZWIĄZANIE PROBLEMU Z EPSILONEM:
-		# Jeśli diff jest większe od zera, liczymy ułamek normalnie.
-		# Jeśli diff == 0 (wartości są identyczne), ułamek to po prostu 0.
 		fraction = torch.where(
 			diff > 1e-6,
 			(x - val_left) / (diff + 1e-8),  # +1e-8 chroni przed problemami precyzji float
@@ -73,6 +64,17 @@ class BaseGraphAutoEncoder(pl.LightningModule):
 		rank_x = idx_left.float() + fraction
 
 		return self._pearson_correlation(rank_x, rank_y)
+
+	# Inicjalizator wag
+	def _init_weights(self, m):
+		if isinstance(m, nn.Linear):
+			nn.init.kaiming_normal_(m.weight, mode='fan_in', nonlinearity='relu')
+			if m.bias is not None:
+				nn.init.constant_(m.bias, 0.0)
+
+		elif isinstance(m, (nn.BatchNorm1d, nn.LayerNorm)):
+			nn.init.constant_(m.weight, 1.0)
+			nn.init.constant_(m.bias, 0.0)
 
 
 
