@@ -12,7 +12,7 @@ dense_dropout_rate: 0.2
 conv_use_norm: true
 conv_activation: "silu" # relu, gelu, elu, tanh, none, leaky_relu. silu
 conv_dropout_rate: 0.2
-conv_type: "dense_gin_conv" # dense_gcn_conv, dense_gin_conv
+conv_type: "dense_gat_conv" # dense_gcn_conv, dense_gin_conv
 
 # Encoder
 encoder_use_mlp: true
@@ -23,27 +23,30 @@ encoder_mlp_out_features: 32
 decoder_mlp_out_features: 15
 
 
-encoder_conv_channels: # od 1 do 4 warstw conv
+encoder_conv_channels:
   - 16
   - 32
 
-encoder_dense_features: # od 2 do 7 warstw dense
+encoder_dense_features:
   - 128
   - 64
 
-decoder_a_hidden_dims: # od 1 do 5 warstw dense
+decoder_a_hidden_dims:
   - 64
   - 128
 
-decoder_x_conv_channels: # od 1 do 2 warstw
-  - 32
+
+# Decoder X
+decoder_x_dense_features:
+  - 64
+  - 128
+
+decoder_x_conv_channels:
   - 16
 
-decoder_x_dense_features: # od 1 do 7 warstw
-  - 64
-  - 128
+decoder_x_initial_channels: 32
 
-weight_a: 500.0
+weight_a: 1.0
 kl_weight: 0.007
 
 count_valid: true # Czy to istnieje?

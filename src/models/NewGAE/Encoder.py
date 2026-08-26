@@ -43,8 +43,9 @@ class Encoder(nn.Module):
 			)
 			current_in_channels = out_channels
 
+		self.flatten_size = max_nodes * current_in_channels
 		self.denses = nn.ModuleList()
-		current_in_features = current_in_channels
+		current_in_features = self.flatten_size
 		for out_features in dense_features:
 			self.denses.append(
 				DenseLayer(
@@ -60,12 +61,13 @@ class Encoder(nn.Module):
 		self.output_dim = current_in_features
 
 	def forward(self, x: torch.Tensor, adj: torch.Tensor) -> torch.Tensor:
+		batch_size = x.size(0)
 		x = self.mlp(x)
 
 		for conv in self.convs:
 			x = conv(x, adj)
 
-		x = x.mean(dim=1)
+		x = x.reshape(batch_size, -1)
 
 		for dense in self.denses:
 			x = dense(x)

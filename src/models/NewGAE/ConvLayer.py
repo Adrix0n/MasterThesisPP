@@ -1,8 +1,7 @@
-import torch.nn as nn
 import torch
+import torch.nn as nn
 from torch_geometric.nn import DenseGCNConv, DenseGINConv
-
-
+from src.models.NewGAE.DenseGATConv import DenseGATConv
 class ConvLayer(nn.Module):
 	"""
 	Blok konwolucyjny
@@ -18,7 +17,6 @@ class ConvLayer(nn.Module):
 			conv_type: str):
 		super().__init__()
 
-
 		conv_type_lower = conv_type.lower()
 		if conv_type_lower == 'dense_gcn_conv':
 			self.conv = DenseGCNConv(in_channels, out_channels)
@@ -29,8 +27,11 @@ class ConvLayer(nn.Module):
 				nn.Linear(out_channels, out_channels)
 			)
 			self.conv = DenseGINConv(mlp)
+		elif conv_type_lower == 'dense_gat_conv':
+			self.conv = DenseGATConv(in_channels, out_channels, dropout_rate)
 		else:
-			raise ValueError(f"Nieobsługiwana warstwa konwolucyjna: {conv_type}. Wybierz spośród: dense_gcn_conv, dense_gin_conv.")
+			raise ValueError(
+				f"Nieobsługiwana warstwa konwolucyjna: {conv_type}. Dostępne: dense_gcn_conv, dense_gin_conv, dense_gat_conv.")
 
 		if use_norm:
 			self.norm = nn.BatchNorm1d(out_channels)
@@ -51,15 +52,16 @@ class ConvLayer(nn.Module):
 		elif activation_lower == 'leaky_relu':
 			self.act = nn.LeakyReLU()
 		elif activation_lower == 'silu':
+			# W fizyce i geometrii to Twój faworyt!
 			self.act = nn.SiLU()
 		else:
 			raise ValueError(
-				f"Nieobsługiwana funkcja aktywacji: {activation}. Wybierz spośród: relu, gelu, elu, tanh, none."
+				f"Nieobsługiwana funkcja aktywacji: {activation}. Dostępne: relu, gelu, elu, tanh, none, leaky_relu, silu."
 			)
 
 		if dropout_rate > 0.0:
 			if not (0.0 <= dropout_rate < 1.0):
-				raise ValueError("Współczynnik dropout_rate musi zawierać się w przedziale [0, 1).")
+				raise ValueError("dropout_rate musi zawierać się w przedziale [0, 1).")
 			self.dropout = nn.Dropout(dropout_rate)
 		else:
 			self.dropout = nn.Identity()
@@ -68,8 +70,6 @@ class ConvLayer(nn.Module):
 		x = self.conv(x, adj)
 		x = x.transpose(1, 2)  # (Batch, Nodes, Features) -> (B, Features, Nodes)
 		x = self.norm(x)
-		x = x.transpose(1, 2)  # Back to (B, Węzły, Cechy)
+		x = x.transpose(1, 2)  # Back to (Batch, Nodes, Features)
 		x = self.act(x)
-		x = self.dropout(x)
-
 		return x

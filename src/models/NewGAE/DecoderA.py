@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
+import math
 from typing import List, Any, Dict
-from numpy import sqrt
 from src.models.NewGAE.DenseLayer import DenseLayer
 
 
@@ -23,16 +23,17 @@ class DecoderA(nn.Module):
 		for out_features in hidden_dims:
 			self.denses.append(
 				DenseLayer(
-					in_features = current_in_features,
-					out_features = out_features,
-					activation = config['dense_activation'],
-					use_norm = config['dense_use_norm'],
-					dropout_rate = config['dense_dropout_rate']
+					in_features=current_in_features,
+					out_features=out_features,
+					activation=config['dense_activation'],
+					use_norm=config['dense_use_norm'],
+					dropout_rate=config['dense_dropout_rate']
 				)
 			)
 			current_in_features = out_features
 
 		self.node_generator = nn.Linear(current_in_features, max_nodes * self.node_embed_dim)
+		self.node_pos_embed = nn.Parameter(torch.randn(1, max_nodes, self.node_embed_dim) * 0.05)
 
 	def forward(self, z: torch.Tensor) -> torch.Tensor:
 		batch_size = z.size(0)
@@ -44,7 +45,11 @@ class DecoderA(nn.Module):
 		x = self.node_generator(x)
 
 		node_embeddings = x.view(batch_size, self.max_nodes, self.node_embed_dim)
-		adj_logits = torch.bmm(node_embeddings, node_embeddings.transpose(1, 2))
+		node_embeddings = node_embeddings + self.node_pos_embed
 
-		a_prime = adj_logits / torch.tensor(sqrt(self.node_embed_dim))
-		return a_prime
+		# Generowanie logitów macierzy sąsiedztwa (symetrycznej)
+		adj_logits = torch.bmm(node_embeddings, node_embeddings.transpose(1, 2))
+		adj_logits = adj_logits / math.sqrt(self.node_embed_dim)
+
+		# Zwracane są logity, sigmoida nakładana będzie później
+		return adj_logits

@@ -76,17 +76,20 @@ class BaseGraphAutoEncoder(pl.LightningModule):
 			nn.init.constant_(m.weight, 1.0)
 			nn.init.constant_(m.bias, 0.0)
 
-
-
 	def configure_optimizers(self):
-		optimizer = optim.Adam(self.parameters(), lr=self.hparams.learning_rate)
-		scheduler = optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lambda epoch: ((epoch+1)/10.0) ** 0.7)
+		optimizer = optim.Adam(self.parameters(), lr=0.01)
+
+		def lr_decay(epoch):
+			p = epoch + 10.0
+			return 1.0 / ((p / 10.0) ** 0.7)
+
+		scheduler = optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lr_decay)
+
 		return {
 			"optimizer": optimizer,
 			"lr_scheduler": {
 				"scheduler": scheduler,
-				"interval": "epoch",
-				"monitor": "val/loss_total",
+				"interval": "epoch"
 			},
 		}
 

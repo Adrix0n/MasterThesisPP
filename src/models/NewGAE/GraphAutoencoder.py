@@ -1,12 +1,12 @@
 import torch
 import torch.nn as nn
-import pytorch_lightning as pl
-import torch.optim as optim
+import torch.nn.functional as F
 from typing import Dict, Any
 from src.models.NewGAE.Encoder import Encoder
 from src.models.NewGAE.DecoderA import DecoderA
 from src.models.NewGAE.DecoderX import DecoderX
 from src.models.BaseGraphAutoEncoder import BaseGraphAutoEncoder
+
 
 class GraphAutoencoder(BaseGraphAutoEncoder):
 
@@ -19,7 +19,7 @@ class GraphAutoencoder(BaseGraphAutoEncoder):
 			conv_channels=self.hparams.encoder_conv_channels,
 			dense_features=self.hparams.encoder_dense_features,
 			max_nodes=self.hparams.max_nodes,
-			use_mlp=True,
+			use_mlp=self.hparams.get('encoder_use_mlp', True),
 			config=config
 		)
 
@@ -43,38 +43,18 @@ class GraphAutoencoder(BaseGraphAutoEncoder):
 			config=config
 		)
 
-		self.criterion_a = nn.BCEWithLogitsLoss()
-		self.criterion_x = nn.HuberLoss()
-
 		self.apply(self._init_weights)
-
 
 	def forward(self, x: torch.Tensor, adj: torch.Tensor):
 		hidden_features = self.encoder_backbone(x, adj)
 		z = self.fc_z(hidden_features)
-		a_prime = self.decoder_a(z)
-		x_prime = self.decoder_x(z)
 
-		return a_prime, x_prime, z
+		a_logits = self.decoder_a(z)
+		a_probs = torch.sigmoid(a_logits)
 
-	def compute_reconstruction_loss(self, batch):
-		x, adj, properties = batch
+		x_prime = self.decoder_x(z, a_probs)
 
-		a_prime, x_prime, z = self.forward(x, adj)
-
-		loss_a = self.criterion_a(a_prime, adj)
-		loss_x = self.criterion_x(x_prime, x)
-		weight_a = self.hparams.get('weight_a', 1000.0)
-
-		recon_loss = (weight_a * loss_a) + loss_x
-
-		# Słownik z dodatkowymi wartościami do zalogowania
-		log_dict = {
-			"loss_A": loss_a,
-			"loss_X": loss_x,
-		}
-
-		return recon_loss, z, properties, log_dict
+		return a_logits, x_prime, z
 
 	def encode(self, x: torch.Tensor, adj: torch.Tensor):
 		hidden_features = self.encoder_backbone(x, adj)
@@ -82,7 +62,45 @@ class GraphAutoencoder(BaseGraphAutoEncoder):
 		return z
 
 	def decode(self, z: torch.Tensor):
-		a_prime = self.decoder_a(z)
-		x_prime = self.decoder_x(z)
+		a_logits = self.decoder_a(z)
+		a_probs = torch.sigmoid(a_logits)
+		x_prime = self.decoder_x(z, a_probs)
 
-		return x_prime, a_prime
+		return a_probs, x_prime
+
+	def compute_reconstruction_loss(self, batch):
+		x, adj, properties = batch
+		parts_num = properties['parts_num']
+
+		a_logits, x_prime, z = self.forward(x, adj)
+
+		# Maski
+		node_mask = torch.arange(self.hparams.max_nodes, device=x.device).unsqueeze(0) < parts_num.unsqueeze(1)
+		node_mask = node_mask.float()
+		adj_mask = node_mask.unsqueeze(2) * node_mask.unsqueeze(1)
+		feat_mask = node_mask.unsqueeze(2)
+
+		pos_weight = torch.tensor([12.0], device=x.device)
+		loss_a_unreduced = F.binary_cross_entropy_with_logits(
+			a_logits,
+			adj,
+			reduction='none',
+			pos_weight=pos_weight
+		)
+		loss_a_masked = loss_a_unreduced * adj_mask
+		loss_a = loss_a_masked.sum() / (adj_mask.sum() + 1e-8)
+
+		# 2. Strata dla współrzędnych 3D (X)
+		loss_x_unreduced = F.huber_loss(x_prime, x, reduction='none')
+		loss_x_masked = loss_x_unreduced * feat_mask
+		loss_x = loss_x_masked.sum() / (feat_mask.sum() + 1e-8)
+
+		weight_a = self.hparams.get('weight_a', 1000.0)
+		recon_loss = (weight_a * loss_a) + loss_x
+
+		log_dict = {
+			"loss_A": loss_a,
+			"loss_X": loss_x,
+		}
+
+		return recon_loss, z, properties, log_dict

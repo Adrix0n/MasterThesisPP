@@ -18,7 +18,7 @@ class AutoencoderEvaluator:
 
 		# Dekodowanie wektora przestrzeni ukrytej
 		with torch.no_grad():
-			x_prime, a_prime = self.autoencoder.decode(latent_vector)
+			a_prime, x_prime = self.autoencoder.decode(latent_vector)
 
 		x_prime.squeeze_()
 		a_prime.squeeze_()
