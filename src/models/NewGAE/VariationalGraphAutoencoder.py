@@ -8,25 +8,6 @@ from src.models.NewGAE.DecoderX import DecoderX
 from src.models.BaseGraphAutoEncoder import BaseGraphAutoEncoder
 
 
-class FocalLoss(nn.Module):
-	"""
-	Focal Loss for sparse binary adjacency matrices.
-	Reduces loss contribution from easy negatives (abundant zeros)
-	and focuses on hard positives (rare edges).
-	"""
-	def __init__(self, alpha: float = 0.25, gamma: float = 2.0):
-		super().__init__()
-		self.alpha = alpha
-		self.gamma = gamma
-
-	def forward(self, preds: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
-		bce_loss = F.binary_cross_entropy_with_logits(preds, targets, reduction='none')
-		pt = torch.exp(-bce_loss)  # probability of correct prediction
-		focal_weight = self.alpha * (1 - pt) ** self.gamma
-		focal_loss = focal_weight * bce_loss
-		return focal_loss.mean()
-
-
 class VariationalGraphAutoencoder(BaseGraphAutoEncoder):
 
 	def __init__(self, config: Dict[str, Any], frams_module):
@@ -63,10 +44,6 @@ class VariationalGraphAutoencoder(BaseGraphAutoEncoder):
 			config=config
 		)
 
-		# Focal Loss dla rzadkiej macierzy sąsiedztwa
-		self.criterion_a = FocalLoss(alpha=0.25, gamma=2.0)
-		self.criterion_x = nn.HuberLoss()
-
 		self.apply(self._init_weights)
 
 	def reparameterize(self, mu: torch.Tensor, logvar: torch.Tensor) -> torch.Tensor:
@@ -75,7 +52,7 @@ class VariationalGraphAutoencoder(BaseGraphAutoEncoder):
 			eps = torch.randn_like(std)
 			return mu + eps * std
 		else:
-			# Podczas ewaluacji chcemy deterministycznych wyników
+			# Podczas ewaluacji chcemy deterministycznych wyników (tylko średnia)
 			return mu
 
 	def forward(self, x: torch.Tensor, adj: torch.Tensor):
@@ -86,51 +63,15 @@ class VariationalGraphAutoencoder(BaseGraphAutoEncoder):
 
 		z = self.reparameterize(mu, logvar)
 
-		a_prime = self.decoder_a(z)
-		x_prime = self.decoder_x(z, a_prime)
+		# Dekoder A zwraca surowe logity
+		a_logits = self.decoder_a(z)
 
-		return a_prime, x_prime, mu, logvar, z
+		# Dekoder X potrzebuje prawdopodobieństw [0, 1]
+		a_probs = torch.sigmoid(a_logits)
+		x_prime = self.decoder_x(z, a_probs)
 
-	def compute_reconstruction_loss(self, batch):
-		x, adj, properties = batch
-		parts_num = properties['parts_num']  # (B,) — liczba rzeczywistych węzłów
-
-		a_prime, x_prime, mu, logvar, z = self.forward(x, adj)
-
-		# Maska węzłów: (B, max_nodes)
-		node_mask = torch.arange(self.hparams.max_nodes, device=x.device).unsqueeze(0) < parts_num.unsqueeze(1)
-		node_mask = node_mask.float()
-
-		# Maska sąsiedztwa: (B, max_nodes, max_nodes)
-		adj_mask = node_mask.unsqueeze(2) * node_mask.unsqueeze(1)
-
-		# Maska cech: (B, max_nodes, 1) → broadcast do (B, max_nodes, num_features)
-		feat_mask = node_mask.unsqueeze(2)
-
-		# Straty z maskowaniem
-		loss_a = self.criterion_a(a_prime * adj_mask, adj * adj_mask)
-		loss_x = self.criterion_x(x_prime * feat_mask, x * feat_mask)
-
-		# Normalizacja przez liczbę rzeczywistych elementów
-		loss_a = loss_a * (adj_mask.numel() / (adj_mask.sum() + 1e-8))
-		loss_x = loss_x * (feat_mask.numel() / (feat_mask.sum() + 1e-8))
-
-		weight_a = self.hparams.get('weight_a', 1000.0)
-
-		# Dywergencja Kullbacka_Liblera
-		kl_loss = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp(), dim=1)
-		kl_loss = torch.mean(kl_loss)  # Uśredniamy karę dla całego batcha
-		kl_weight = self.hparams.get('kl_weight', 1.0)
-
-		recon_loss = (weight_a * loss_a) + loss_x + (kl_weight * kl_loss)
-
-		log_dict = {
-			"loss_A": loss_a,
-			"loss_X": loss_x,
-			"loss_KL": kl_loss,
-		}
-
-		return recon_loss, z, properties, log_dict
+		# Zwracamy a_logits dla stabilnej funkcji straty
+		return x_prime, a_logits, mu, logvar, z
 
 	def encode(self, x: torch.Tensor, adj: torch.Tensor):
 		hidden_features = self.encoder_backbone(x, adj)
@@ -141,7 +82,53 @@ class VariationalGraphAutoencoder(BaseGraphAutoEncoder):
 		return z
 
 	def decode(self, z: torch.Tensor):
-		a_prime = self.decoder_a(z)
-		x_prime = self.decoder_x(z, a_prime)
+		a_logits = self.decoder_a(z)
+		a_probs = torch.sigmoid(a_logits)
+		x_prime = self.decoder_x(z, a_probs)
 
-		return a_prime, x_prime
+		return x_prime, a_probs
+
+	def compute_reconstruction_loss(self, batch):
+		x, adj, properties = batch
+		parts_num = properties['parts_num']
+
+		x_prime, a_logits, mu, logvar, z = self.forward(x, adj)
+
+		# Maski
+		node_mask = torch.arange(self.hparams.max_nodes, device=x.device).unsqueeze(0) < parts_num.unsqueeze(1)
+		node_mask = node_mask.float()
+		adj_mask = node_mask.unsqueeze(2) * node_mask.unsqueeze(1)
+		feat_mask = node_mask.unsqueeze(2)
+
+		pos_weight = torch.tensor([12.0], device=x.device)
+
+		loss_a_unreduced = F.binary_cross_entropy_with_logits(
+			a_logits,
+			adj,
+			reduction='none',
+			pos_weight=pos_weight
+		)
+		loss_a_masked = loss_a_unreduced * adj_mask
+		loss_a = loss_a_masked.sum() / (adj_mask.sum() + 1e-6)
+
+		loss_x_unreduced = F.huber_loss(x_prime, x, reduction='none')
+		loss_x_masked = loss_x_unreduced * feat_mask
+		loss_x = loss_x_masked.sum() / (feat_mask.sum() + 1e-6)
+
+		# Dywergencja Kullbacka-Leiblera (kara za odchylenie z od rozkładu normalnego N(0,1))
+		kl_loss = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp(), dim=1)
+		kl_loss = torch.mean(kl_loss)
+
+		weight_a = self.hparams.get('weight_a', 500.0)
+		kl_weight = self.hparams.get('kl_weight', 0.007)
+
+		# Całkowity błąd
+		recon_loss = (weight_a * loss_a) + loss_x + (kl_weight * kl_loss)
+
+		log_dict = {
+			"loss_A": loss_a,
+			"loss_X": loss_x,
+			"loss_KL": kl_loss,
+		}
+
+		return recon_loss, z, properties, log_dict

@@ -15,9 +15,9 @@ genformat: "0"
 initial_genotype: null
 
 max_numparts: 15
-max_numjoints: 15
+max_numjoints: 30
 max_numneurons: null
 max_numconnections: null
 max_numgenochars: null
 
-result_filepath: "../results/sampled_best_individuals.jsonl"
+result_filepath: "../results/sampled_best_individuals_30_numjoints.jsonl"

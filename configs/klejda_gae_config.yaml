@@ -1,5 +1,5 @@
 # Konfiguracja autoenkodera
-in_channels: 5
+in_channels: 3
 max_nodes: 15
 #latent_dim: 16 # 3, 10, 15
 latent_dim: 3

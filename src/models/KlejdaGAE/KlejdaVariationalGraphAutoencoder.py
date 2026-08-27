@@ -63,14 +63,14 @@ class KlejdaVariationalGraphAutoencoder(BaseGraphAutoEncoder):
 		a_prime = self.decoder_a(z)
 		x_prime = self.decoder_x(z, a_prime)
 
-		return a_prime, x_prime, mu, logvar, z
+		return x_prime, a_prime, mu, logvar, z
 
 	def compute_reconstruction_loss(self, batch):
 		# Rozpakowanie batcha
 		x, adj, properties = batch
 
 		# Przepływ przez ten konkretny model
-		a_prime, x_prime, mu, logvar, z = self.forward(x, adj)
+		x_prime, a_prime, mu, logvar, z = self.forward(x, adj)
 
 		# Liczenie specyficznych strat
 		loss_a = self.criterion(a_prime, adj)

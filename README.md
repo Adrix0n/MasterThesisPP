@@ -2,24 +2,16 @@
 - [X] Wygenerować lepszy zbiór framsticków (taki, w którym bierzemy osobników z hall of fame dla każdej ?epoki?)
   - Wiele odtworzeń
   - Równomierne rozłożenie przykładów
-- [ ] Slurp, slurm
+- [ ] slurm
 - [ ] Wypisać co znajdzie się w wynikach, jakie wykresy itp.
   - [ ] Wizualizacje ?
 - [?] Zaimplementować locality loss dla similarity
   - [ ] Zweryfikować, dlaczego przetwarza się niemiłosiernie długo
-  - [ ] Dropout
+  - [ ] W douczaniu wykorzystać osobników z CMA-ES, ale zastosować np. oversampling nowych elementów, ewentualnie FIFO na osobników, zapominając starsze. Epok uczenia kilka, learning rate zmniejszony
+  - [ ] Implementacja treningu równoległego, aby przyspieszyć i urealnić proces przeprowadzania eksperymentów
+  - 
 # TODO
 - [ ] Własna implementacja
-  - [ ] Własna warstwa gęsta
-    - [ ]
-  - [ ] Własna warstwa konwolucyjna
-  - [ ] Własny enkoder
-  - [ ] Własny dekoder
-  - [ ] Własny autoenkoder
-  - [ ] Własny wariacyjny autoenkoder
-  - [ ] Działanie na fenotypach
-  - [ ] Zwrócenie uwagi na możliwe warstwy grafowe konwolucyjne
-  - [ ] Poprawna weryfikacja przebiegu uczenia autoenkodera
 - [ ] Przygotować prezentację z wynikami
   - [ ] Omówienie architektury
     - [ ] Autoenkoder
@@ -31,18 +23,48 @@
 - Bazowy algorytm ewolucyjny (1 bądź 2 rodzaje [GP i GE])
 Zwykły i wariacyjny:
     Trzy locality loss: part number, fitness, similarity:
-    - Na nauczonym autoenkoderze
-    - Z douczaniem
-    - Ten z reimplementacji
-Łącznie: 1 + 2 * 3 * 3 = 19
+      Trzy rozmiary latent space:
+        Dwa różne zestawy warstw:
+          - Na nauczonym autoenkoderze,
+          - Z douczaniem,
+          - Ten z reimplementacji
+
+Łącznie: 1 + 2 * 3 * 3 * 3 * 2 = 109
 
 > Obliczać również czas i warunkować eksperyment czasem przetwarzania
 
+Eksperyment encode i decode w wielu powtórkach. Jeżeli jest strata, to możliwe że zdekodowany osobnik poddany ponownie kodowaniu i dekodowaniu będzie jeszcze bardziej zniszczony 
+
+Eksperyment  różną liczbą zbioru uczącego (Wygląda na to, że większa liczba korzystnie wpływa na jakość rozwiązań)
+
+
 # Wizualizacje, grafiki, wykresy itp.
 1. Zbiór uczący
-   2. Tabela z rozkładem wysokości, liczby części
-   3. Histogram z rozkładu wysokości i liczby części
-   4. Dodatkowe informacje, w tym np. liczba uruchomień, sposób generacji zbioru
-2. 
+    1. Tabela z rozkładem wysokości, liczby węzłów, liczby połączeń (std, mean, min, max)
+    2. Histogram z rozkładu wysokości, liczby części i liczby połączeń
+    3. Dodatkowe informacje, w tym np. liczba uruchomień, sposób generacji zbioru
+2. Trening
+    1. Porównanie loss względem różnego rozmiaru latent space
+    2. Porównanie straty X oraz A dla wersji zwykłej oraz wariacyjnej
+    3. Różnice na stracie względem różnej liczby warstw
+    4. Różnice na stracie względem różnego locality loss, w tym None
+3. Przebieg ewolucji
+    1. Porównanie przebiegu ewolucji EA na zwykłej i zmodyfikowanej przestrzenii
+       - Czas
+       - Wykres najlepszego
+       - Wykres średnich
+    2. Porównanie różnych najlepszych uzyskanych modeli względem bazowej ewolucji
+     
+
+wyniki z pracy:
+- porównanie loss dla różnej liczby warstw
+- przebieg straty rekonstrukcji dla całości, X, A
+- Średnia strata dla 3 różnych wielkości latent space oraz czterech różnych warstw Conv
+- Wpływ mutacji na losowych przykładach w GAE i VGAE w zależności od siły mutacji
+- Dystans do nie gorszego osobnika w przestrzeni ukrytej dla GAE i VGAE
+- Strata dla różnych locality loss, w tym również None
+- Przebiegi ewolucji w algorytmie działającym w przestrzeni ukrytej
+- Porównanie 5 najlepszych modeli z bazowym: baseline VGAE_parts, VGAE_sim, VGAE_sim, VGAE_parts, VGAE_none, GAE_none, GAE_parts, GAE_sim, GAE_fit
+
 
 # Dodatkowe informacje

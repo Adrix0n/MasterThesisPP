@@ -54,7 +54,7 @@ class GraphAutoencoder(BaseGraphAutoEncoder):
 
 		x_prime = self.decoder_x(z, a_probs)
 
-		return a_logits, x_prime, z
+		return x_prime, a_logits, z
 
 	def encode(self, x: torch.Tensor, adj: torch.Tensor):
 		hidden_features = self.encoder_backbone(x, adj)
@@ -66,13 +66,13 @@ class GraphAutoencoder(BaseGraphAutoEncoder):
 		a_probs = torch.sigmoid(a_logits)
 		x_prime = self.decoder_x(z, a_probs)
 
-		return a_probs, x_prime
+		return x_prime, a_probs
 
 	def compute_reconstruction_loss(self, batch):
 		x, adj, properties = batch
 		parts_num = properties['parts_num']
 
-		a_logits, x_prime, z = self.forward(x, adj)
+		x_prime, a_logits, z = self.forward(x, adj)
 
 		# Maski
 		node_mask = torch.arange(self.hparams.max_nodes, device=x.device).unsqueeze(0) < parts_num.unsqueeze(1)

@@ -22,9 +22,8 @@ class FramsticksGraphDataset(Dataset):
 
 	@staticmethod
 	def parse_f0_to_matrices(f0_str: str, max_nodes: int):
-		# Wierzchołki teraz mają 5 cech: [x, y, z, fr, ing]
-		x_matrix = torch.zeros((max_nodes, 5), dtype=torch.float32)
-
+		# Wierzchołki teraz mają 3 cechy: [x, y, z]
+		x_matrix = torch.full((max_nodes, 3), -1, dtype=torch.float32)
 		
 		# Macierz sąsiedztwa (1.0 = jest krawędź, 0.0 = brak krawędzi)
 		a_matrix = torch.zeros((max_nodes, max_nodes), dtype=torch.float32)
@@ -60,12 +59,12 @@ class FramsticksGraphDataset(Dataset):
 				z = float(unnamed_args[2]) if len(unnamed_args) > 2 else float(props.get('z', 0.0))
 
 				# Pobieranie nowych cech z domyślną wartością 0.0 w przypadku ich braku
-				fr = float(props.get('fr', 0.0))
-				ing = float(props.get('ing', 0.0))
+				# fr = float(props.get('fr', 0.0))
+				# ing = float(props.get('ing', 0.0))
 
-				x_matrix[part_idx] = torch.tensor([x, y, z, fr, ing], dtype=torch.float32)
+				x_matrix[part_idx] = torch.tensor([x, y, z], dtype=torch.float32)
 
-				# a_matrix[part_idx, part_idx] = 1.0
+				a_matrix[part_idx, part_idx] = 1.0
 
 				part_idx += 1
 

@@ -1,4 +1,4 @@
-in_channels: 5
+in_channels: 3
 latent_dim: 15
 learning_rate: 0.01
 max_nodes: 15
@@ -47,11 +47,11 @@ decoder_x_conv_channels:
 decoder_x_initial_channels: 32
 
 weight_a: 1.0
-kl_weight: 0.007
+kl_weight: 0.05
 
 count_valid: true # Czy to istnieje?
 
 locality_loss_type: "fitness" # 'fitness', 'parts_num' , 'similarity'
 locality_loss_method: "spearman" # 'pearson', 'spearman'
-locality_loss_lambda_val: 1.0
+locality_loss_lambda_val: 0.1
 save_dir: "./checkpoints"

@@ -8,7 +8,7 @@ class PostProcessFlag(Flag):
 	INVALID_ZERO_LENGTH_JOINTS = auto()
 	INVALID_SUBGROUPS = auto()
 	INVALID_TO_LONG_PARTS = auto()
-	INVALID = auto()  # Set only if max iterations are reached and it cannot be repaired
+	INVALID = auto()
 
 class FramsticksPostProcessor:
 	def __init__(self, max_joint_length: float = 2.0, max_iterations: int = 100, threshold: float = 0.5,
@@ -54,9 +54,7 @@ class FramsticksPostProcessor:
 
 			G.add_node(
 				new_idx,
-				pos=features[:3],
-				fr=features[3] if len(features) > 3 else 0.0,
-				ing=features[4] if len(features) > 4 else 0.0
+				pos=features[:3]
 			)
 			new_idx += 1
 
@@ -190,11 +188,8 @@ class FramsticksPostProcessor:
 	def _generate_f0_string(self, G: nx.Graph) -> str:
 		lines = ["//0"]
 		for i in range(len(G.nodes)):
-			self.pos_ = G.nodes[i]['pos']
-			pos = self.pos_
-			fr = G.nodes[i]['fr']
-			ing = G.nodes[i]['ing']
-			lines.append(f"p:{pos[0]:.3f}, {pos[1]:.3f}, {pos[2]:.3f}, fr={fr:.3f}, ing={ing:.3f}")
+			pos = G.nodes[i]['pos']
+			lines.append(f"p:{pos[0]:.6f}, {pos[1]:.6f}, {pos[2]:.6f}")
 
 		for u, v in G.edges():
 			lines.append(f"j:{u}, {v}")

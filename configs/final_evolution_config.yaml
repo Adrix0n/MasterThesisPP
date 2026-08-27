@@ -18,7 +18,7 @@ genformat: "0"
 initial_genotype: null
 
 max_numparts: 15
-max_numjoints: 15
+max_numjoints: 30
 max_numneurons: null
 max_numconnections: null
 max_numgenochars: null
@@ -26,6 +26,6 @@ max_numgenochars: null
 result_filepath: "../results/test_experiment_result.json"
 
 # CMA-ES
-latent_dim: 15  # Taki sam jak przy treningu (potrzebne do CMA-ES)
+latent_dim: 3 # Taki sam jak przy treningu (potrzebne do CMA-ES)
 sigma: 0.3    # Początkowe odchylenie standardowe
 centroid: 0.0   # Środek rozkładu
