@@ -1,6 +1,6 @@
 frams_path: "../external/Framsticks55"
 frams_lib: null
-sim_file: "eval-allcriteria.sim;deterministic.sim;sample-period-2.sim;only-body.sim"
+sim_file: "eval-allcriteria-mini.sim;deterministic.sim;sample-period-2.sim;only-body.sim"
 opt_criteria:
   - "vertpos"
 
@@ -20,4 +20,4 @@ max_numneurons: null
 max_numconnections: null
 max_numgenochars: null
 
-result_filepath: "../results/sampled_best_individuals_30_numjoints.jsonl"
+result_filepath: "../results/sampled_best_individuals_new_mini.jsonl"

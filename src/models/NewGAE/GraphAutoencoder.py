@@ -74,6 +74,7 @@ class GraphAutoencoder(BaseGraphAutoEncoder):
 
 		x_prime, a_logits, z = self.forward(x, adj)
 
+
 		# Maski
 		node_mask = torch.arange(self.hparams.max_nodes, device=x.device).unsqueeze(0) < parts_num.unsqueeze(1)
 		node_mask = node_mask.float()
@@ -98,9 +99,38 @@ class GraphAutoencoder(BaseGraphAutoEncoder):
 		weight_a = self.hparams.get('weight_a', 1000.0)
 		recon_loss = (weight_a * loss_a) + loss_x
 
+
+		with torch.no_grad():
+			# Obliczanie dodatkowych metryk
+			a_probs = torch.sigmoid(a_logits)
+			# TODO: Jakiś threshold z configa tutaj?
+			a_preds = (a_probs > 0.5).float()
+
+			valid_mask = adj_mask.bool()
+			preds_flat = a_preds[valid_mask]
+			targets_flat = adj[valid_mask]
+
+			# Zliczanie True Positives, True Negatives itp.
+			TP = ((preds_flat == 1) & (targets_flat == 1)).sum().float()
+			TN = ((preds_flat == 0) & (targets_flat == 0)).sum().float()
+			FP = ((preds_flat == 1) & (targets_flat == 0)).sum().float()
+			FN = ((preds_flat == 0) & (targets_flat == 1)).sum().float()
+
+			eps = 1e-8
+
+			recall = TP / (TP + FN + eps)
+			specificity = TN / (TN + FP + eps)
+			precision = TP / (TP + FP + eps)
+			g_mean = torch.sqrt(recall * specificity)
+
+
 		log_dict = {
 			"loss_A": loss_a,
 			"loss_X": loss_x,
+			"metric_A_recall": recall,
+			"metric_A_precision": precision,
+			"metric_A_g_mean": g_mean,
+			"metric_A_fp_ratio": FP / (FP + TN + eps)
 		}
 
 		return recon_loss, z, properties, log_dict

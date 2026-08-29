@@ -19,6 +19,8 @@
   - [ ] Dane uczące do autoenkodera, wykres zbioru uczącego (zakres fitness na liczbę osobników)
   - [ ] Wyniki eksperymentu
 
+
+
 ## Jakie eksperymenty?
 - Bazowy algorytm ewolucyjny (1 bądź 2 rodzaje [GP i GE])
 Zwykły i wariacyjny:
@@ -33,9 +35,9 @@ Zwykły i wariacyjny:
 
 > Obliczać również czas i warunkować eksperyment czasem przetwarzania
 
-Eksperyment encode i decode w wielu powtórkach. Jeżeli jest strata, to możliwe że zdekodowany osobnik poddany ponownie kodowaniu i dekodowaniu będzie jeszcze bardziej zniszczony 
+Eksperyment encode i decode w wielu powtórkach. Jeżeli jest strata, to możliwe, że zdekodowany osobnik poddany ponownie kodowaniu i dekodowaniu będzie jeszcze bardziej zniszczony 
 
-Eksperyment  różną liczbą zbioru uczącego (Wygląda na to, że większa liczba korzystnie wpływa na jakość rozwiązań)
+Eksperyment różną liczbą zbioru uczącego (Wygląda na to, że większa liczba korzystnie wpływa na jakość rozwiązań)
 
 
 # Wizualizacje, grafiki, wykresy itp.
