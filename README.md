@@ -70,3 +70,4 @@ wyniki z pracy:
 
 
 # Dodatkowe informacje
+external: https://drive.google.com/file/d/1ko3txj3QBHBuU5Gpo-HfEzKoxP2eDdRl/view?usp=sharing
