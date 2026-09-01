@@ -43,7 +43,7 @@ class GraphAutoencoder(BaseGraphAutoEncoder):
 			config=config
 		)
 
-		self.apply(self._init_weights)
+		# self.apply(self._init_weights)
 
 	def forward(self, x: torch.Tensor, adj: torch.Tensor):
 		hidden_features = self.encoder_backbone(x, adj)

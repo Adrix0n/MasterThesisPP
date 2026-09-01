@@ -24,8 +24,8 @@ class VariationalGraphAutoencoder(BaseGraphAutoEncoder):
 		)
 
 		# Warstwy ukryte wariacyjnego autoenkodera
-		self.fc_mu = nn.Linear(self.encoder_backbone.output_dim, self.hparams.latent_dim)
-		self.fc_logvar = nn.Linear(self.encoder_backbone.output_dim, self.hparams.latent_dim)
+		self.fc_mu = nn.Linear(int(self.encoder_backbone.output_dim), self.hparams.latent_dim)
+		self.fc_logvar = nn.Linear(int(self.encoder_backbone.output_dim), self.hparams.latent_dim)
 
 		# Inicjalizacja Dekodera A
 		self.decoder_a = DecoderA(
@@ -43,8 +43,6 @@ class VariationalGraphAutoencoder(BaseGraphAutoEncoder):
 			num_features=self.hparams.in_channels,
 			config=config
 		)
-
-		self.apply(self._init_weights)
 
 	def reparameterize(self, mu: torch.Tensor, logvar: torch.Tensor) -> torch.Tensor:
 		if self.training:
@@ -98,6 +96,10 @@ class VariationalGraphAutoencoder(BaseGraphAutoEncoder):
 		node_mask = torch.arange(self.hparams.max_nodes, device=x.device).unsqueeze(0) < parts_num.unsqueeze(1)
 		node_mask = node_mask.float()
 		adj_mask = node_mask.unsqueeze(2) * node_mask.unsqueeze(1)
+
+		diag_mask = torch.eye(self.hparams.max_nodes, device=x.device).bool()
+		adj_mask.masked_fill_(diag_mask, 0.0)
+
 		feat_mask = node_mask.unsqueeze(2)
 
 		pos_weight = torch.tensor([self.hparams.pos_weight], device=x.device)
@@ -113,7 +115,8 @@ class VariationalGraphAutoencoder(BaseGraphAutoEncoder):
 
 		loss_x_unreduced = F.huber_loss(x_prime, x, reduction='none')
 		loss_x_masked = loss_x_unreduced * feat_mask
-		loss_x = loss_x_masked.sum() / (feat_mask.sum() + 1e-6)
+		num_features = x.size(2)
+		loss_x = loss_x_masked.sum() / (feat_mask.sum() * num_features + 1e-6)
 
 		# Dywergencja Kullbacka-Leiblera (kara za odchylenie z od rozkładu normalnego N(0,1))
 		kl_loss = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp(), dim=1)
@@ -147,6 +150,7 @@ class VariationalGraphAutoencoder(BaseGraphAutoEncoder):
 			specificity = TN / (TN + FP + eps)
 			precision = TP / (TP + FP + eps)
 			g_mean = torch.sqrt(recall * specificity)
+			f1_score = 2 * (precision * recall) / (precision + recall + eps)
 		log_dict = {
 			"loss_A": loss_a,
 			"loss_X": loss_x,
@@ -154,6 +158,7 @@ class VariationalGraphAutoencoder(BaseGraphAutoEncoder):
 			"metric_A_recall": recall,
 			"metric_A_precision": precision,
 			"metric_A_g_mean": g_mean,
+			"metric_A_F1": f1_score,
 			"metric_A_fp_ratio": FP / (FP + TN + eps)
 		}
 

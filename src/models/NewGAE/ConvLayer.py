@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
-from torch_geometric.nn import DenseGCNConv, DenseGINConv
-from src.models.NewGAE.DenseGATConv import DenseGATConv
+from torch_geometric.nn import DenseGCNConv, DenseGINConv, DenseSAGEConv, DenseGraphConv
 class ConvLayer(nn.Module):
 	"""
 	Blok konwolucyjny
@@ -20,6 +19,10 @@ class ConvLayer(nn.Module):
 		conv_type_lower = conv_type.lower()
 		if conv_type_lower == 'dense_gcn_conv':
 			self.conv = DenseGCNConv(in_channels, out_channels)
+		elif conv_type_lower == 'dense_sage_conv':
+			self.conv = DenseSAGEConv(in_channels, out_channels)
+		elif conv_type_lower == 'dense_graph_conv':
+			self.conv = DenseGraphConv(in_channels, out_channels)
 		elif conv_type_lower == 'dense_gin_conv':
 			mlp = nn.Sequential(
 				nn.Linear(in_channels, out_channels),
@@ -27,11 +30,9 @@ class ConvLayer(nn.Module):
 				nn.Linear(out_channels, out_channels)
 			)
 			self.conv = DenseGINConv(mlp)
-		elif conv_type_lower == 'dense_gat_conv':
-			self.conv = DenseGATConv(in_channels, out_channels, dropout_rate)
 		else:
 			raise ValueError(
-				f"Nieobsługiwana warstwa konwolucyjna: {conv_type}. Dostępne: dense_gcn_conv, dense_gin_conv, dense_gat_conv.")
+				f"Nieobsługiwana warstwa konwolucyjna: {conv_type}. Dostępne: dense_gcn_conv, dense_gin_conv, dense_sage_conv, dense_graph_conv.")
 
 		if use_norm:
 			self.norm = nn.BatchNorm1d(out_channels)
@@ -52,7 +53,6 @@ class ConvLayer(nn.Module):
 		elif activation_lower == 'leaky_relu':
 			self.act = nn.LeakyReLU()
 		elif activation_lower == 'silu':
-			# W fizyce i geometrii to Twój faworyt!
 			self.act = nn.SiLU()
 		else:
 			raise ValueError(

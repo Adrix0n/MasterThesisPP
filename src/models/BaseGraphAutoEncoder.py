@@ -65,19 +65,9 @@ class BaseGraphAutoEncoder(pl.LightningModule):
 
 		return self._pearson_correlation(rank_x, rank_y)
 
-	# Inicjalizator wag
-	def _init_weights(self, m):
-		if isinstance(m, nn.Linear):
-			nn.init.kaiming_normal_(m.weight, mode='fan_in', nonlinearity='relu')
-			if m.bias is not None:
-				nn.init.constant_(m.bias, 0.0)
-
-		elif isinstance(m, (nn.BatchNorm1d, nn.LayerNorm)):
-			nn.init.constant_(m.weight, 1.0)
-			nn.init.constant_(m.bias, 0.0)
-
 	def configure_optimizers(self):
-		optimizer = optim.Adam(self.parameters(), lr=0.01)
+		lr = self.hparams.learning_rate
+		optimizer = optim.Adam(self.parameters(), lr=lr)
 
 		def lr_decay(epoch):
 			p = epoch + 10.0

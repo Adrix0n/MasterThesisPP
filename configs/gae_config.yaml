@@ -6,13 +6,13 @@ max_nodes: 15
 # Dense layer
 dense_use_norm: true
 dense_activation: "silu" # relu, gelu, elu, tanh, none, leaky_relu. silu
-dense_dropout_rate: 0.2
+dense_dropout_rate: 0.0
 
 # Conv Layer
 conv_use_norm: true
 conv_activation: "silu" # relu, gelu, elu, tanh, none, leaky_relu. silu
-conv_dropout_rate: 0.2
-conv_type: "dense_gcn_conv" # dense_gcn_conv, dense_gin_conv
+conv_dropout_rate: 0.0
+conv_type: "dense_graph_conv" # dense_gcn_conv ,dense_sage_conv, dense_graph_conv, dense_gin_conv
 
 # Encoder
 encoder_use_mlp: true
@@ -46,11 +46,15 @@ decoder_x_conv_channels:
 
 decoder_x_initial_channels: 32
 
-pos_weight: 3.0
+pos_weight: 2.0
 weight_a: 10.0
 kl_weight: 0.007
 
+use_accumulator: false
+batch_size: 256
+
 count_valid: true # Czy to istnieje?
+
 
 locality_loss_type: "fitness" # 'fitness', 'parts_num' , 'similarity'
 locality_loss_method: "spearman" # 'pearson', 'spearman'
