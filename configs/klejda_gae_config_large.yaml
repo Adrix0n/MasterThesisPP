@@ -44,6 +44,7 @@ weight_a: 300.0
 kl_weight: 0.007
 
 count_valid: true
+max_epochs: 100
 
 locality_loss_type: "fitness" # 'fitness', 'parts_num' , 'similarity'
 locality_loss_method: "spearman" # 'pearson', 'spearman'

@@ -1,6 +1,6 @@
 in_channels: 3
 latent_dim: 15
-learning_rate: 0.01
+learning_rate: 0.004
 max_nodes: 15
 
 # Dense layer
@@ -24,40 +24,42 @@ decoder_mlp_out_features: 15
 
 
 encoder_conv_channels:
-  - 16
-  - 32
+  - 128
+  - 256
 
+# Płytki lejek - tylko 2 szybkie przejścia
 encoder_dense_features:
+  - 512
   - 128
-  - 64
 
+# --- DEKODER A (Topologia) ---
+# Szybkie rozpakowanie
 decoder_a_hidden_dims:
-  - 64
   - 128
+  - 256
 
-
-# Decoder X
+# --- DEKODER X (Geometria 3D) ---
 decoder_x_dense_features:
-  - 64
   - 128
+  - 256
 
 decoder_x_conv_channels:
-  - 16
+  - 128
 
-decoder_x_initial_channels: 32
+decoder_x_initial_channels: 128
 
 pos_weight: 2.0
-weight_a: 10.0
-kl_weight: 0.001
+weight_a: 0.25
+kl_weight: 0.000025
 
 use_accumulator: false
 batch_size: 256
-max_epochs: 100
+max_epochs: 200
 
 count_valid: true # Czy to istnieje?
 
 
 locality_loss_type: "fitness" # 'fitness', 'parts_num' , 'similarity'
 locality_loss_method: "spearman" # 'pearson', 'spearman'
-locality_loss_lambda_val: 0.2
+locality_loss_lambda_val: 0.005
 save_dir: "./checkpoints"
