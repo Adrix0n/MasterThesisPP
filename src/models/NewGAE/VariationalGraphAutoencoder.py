@@ -100,7 +100,7 @@ class VariationalGraphAutoencoder(BaseGraphAutoEncoder):
 		adj_mask = node_mask.unsqueeze(2) * node_mask.unsqueeze(1)
 		feat_mask = node_mask.unsqueeze(2)
 
-		pos_weight = torch.tensor([12.0], device=x.device)
+		pos_weight = torch.tensor([self.hparams.pos_weight], device=x.device)
 
 		loss_a_unreduced = F.binary_cross_entropy_with_logits(
 			a_logits,

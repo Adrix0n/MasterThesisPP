@@ -12,7 +12,7 @@ dense_dropout_rate: 0.2
 conv_use_norm: true
 conv_activation: "silu" # relu, gelu, elu, tanh, none, leaky_relu. silu
 conv_dropout_rate: 0.2
-conv_type: "dense_gat_conv" # dense_gcn_conv, dense_gin_conv
+conv_type: "dense_gcn_conv" # dense_gcn_conv, dense_gin_conv
 
 # Encoder
 encoder_use_mlp: true
@@ -46,12 +46,13 @@ decoder_x_conv_channels:
 
 decoder_x_initial_channels: 32
 
-weight_a: 1.0
-kl_weight: 0.05
+pos_weight: 3.0
+weight_a: 10.0
+kl_weight: 0.007
 
 count_valid: true # Czy to istnieje?
 
 locality_loss_type: "fitness" # 'fitness', 'parts_num' , 'similarity'
 locality_loss_method: "spearman" # 'pearson', 'spearman'
-locality_loss_lambda_val: 0.1
+locality_loss_lambda_val: 0.2
 save_dir: "./checkpoints"

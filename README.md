@@ -1,25 +1,34 @@
+# TODO 3 (ostatnie)
+- [ ] Porządek w kodzie
+  - [ ] Komentarze
+  - [ ] Naparwić problem z dekodowaniem, który sprawia, że się całość zawiesza.
+- [ ] CMA-ES
+  - [ ] Zastosować techniki douczania:
+    - [ ] Kolejke odrzucającą najstarsze osobniki, utrzymująca stały rozmiar 
+    - [ ] Z dodawaniem osobników do zbioru
+    - [ ] Kolejka odrzucająca najsłabsze osobniki
+  - [ ] w CMA_ES nie naprawiać osobników, żeby optymalizacja nie chciała dążyć coraz bardziej w zepsute rejiny
+- [ ] Zrobić wizualizację latent space. Poprzez grid search na przykład. Pokazać, w jaki sposób ustawił się przestrzeń ukryta. Czy drobne zmiany drobnie zmieniają osobnika
+- [ ] Wyszukać gotowego rozwiązania grafowego, gotowego autoenkodera grafowego, spytać czat o to
+- [ ] Poprawić ostatecznie implementacje
+  - [ ] Warstwa konwolucyjna grafowa
+  - [ ] Zastanowić się, co właściwie robi dywergencja Kullbacka_Leiblera
+    - [ ] Dodatkowo sprawdzić inne metody wpływania na rozłożenie przestrzeni ukrytej
+- [ ] Przygotować skrypt/notebook do automatycznego przeprowadzenia wybranych eksperymentów (potrzebne do slurma)
+- [ ] Przygotować notebooki z wizualizacją odpowiednich wyników
+
 # TODO 2
-- [X] Wygenerować lepszy zbiór framsticków (taki, w którym bierzemy osobników z hall of fame dla każdej ?epoki?)
-  - Wiele odtworzeń
-  - Równomierne rozłożenie przykładów
-- [ ] slurm
-- [ ] Wypisać co znajdzie się w wynikach, jakie wykresy itp.
-  - [ ] Wizualizacje ?
 - [?] Zaimplementować locality loss dla similarity
   - [ ] Zweryfikować, dlaczego przetwarza się niemiłosiernie długo
-  - [ ] W douczaniu wykorzystać osobników z CMA-ES, ale zastosować np. oversampling nowych elementów, ewentualnie FIFO na osobników, zapominając starsze. Epok uczenia kilka, learning rate zmniejszony
   - [ ] Implementacja treningu równoległego, aby przyspieszyć i urealnić proces przeprowadzania eksperymentów
   - 
 # TODO
-- [ ] Własna implementacja
 - [ ] Przygotować prezentację z wynikami
   - [ ] Omówienie architektury
     - [ ] Autoenkoder
     - [ ] Dodatkowe człony funkcji straty
   - [ ] Dane uczące do autoenkodera, wykres zbioru uczącego (zakres fitness na liczbę osobników)
   - [ ] Wyniki eksperymentu
-
-
 
 ## Jakie eksperymenty?
 - Bazowy algorytm ewolucyjny (1 bądź 2 rodzaje [GP i GE])
