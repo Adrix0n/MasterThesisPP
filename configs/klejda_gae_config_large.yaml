@@ -42,6 +42,8 @@ decoder_x_dense_features: # 7 warstw dense (maksimum)
 
 weight_a: 300.0
 kl_weight: 0.007
+joint_threshold: 0.5
+batch_size: 256
 
 count_valid: true
 max_epochs: 100

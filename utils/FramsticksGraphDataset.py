@@ -21,7 +21,7 @@ class FramsticksGraphDataset(Dataset):
 		return x, adj, properties_dict
 
 	@staticmethod
-	def parse_f0_to_matrices(f0_str: str, max_nodes: int):
+	def parse_f0_to_matrices(f0_str: str, max_nodes: int, sort_features: bool = True):
 		# Wierzchołki teraz mają 3 cechy: [x, y, z]
 		x_matrix = torch.zeros((max_nodes, 3), dtype=torch.float32)
 		
@@ -92,8 +92,8 @@ class FramsticksGraphDataset(Dataset):
 						a_matrix[p2, p1] = 1.0
 				except (ValueError, IndexError):
 					pass
-
-		x_matrix, a_matrix = FramsticksGraphDataset.sort_matrices_ascending(x_matrix, a_matrix)
+		if sort_features:
+			x_matrix, a_matrix = FramsticksGraphDataset.sort_matrices_ascending(x_matrix, a_matrix)
 		# Zwracamy 3 macierze oraz liczbę węzłów
 		return x_matrix, a_matrix, part_idx
 

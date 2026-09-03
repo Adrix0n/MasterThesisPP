@@ -22,8 +22,8 @@ class KlejdaVariationalGraphAutoencoder(BaseGraphAutoEncoder):
 		)
 
 		# Warstwy ukryte wariacyjnego autoenkodera
-		self.fc_mu = nn.Linear(self.encoder_backbone.output_dim, self.hparams.latent_dim)
-		self.fc_logvar = nn.Linear(self.encoder_backbone.output_dim, self.hparams.latent_dim)
+		self.fc_mu = nn.Linear(int(self.encoder_backbone.output_dim), self.hparams.latent_dim)
+		self.fc_logvar = nn.Linear(int(self.encoder_backbone.output_dim), self.hparams.latent_dim)
 
 		# Inicjalizacja Dekodera A
 		self.decoder_a = KlejdaDecoderA(
@@ -68,26 +68,47 @@ class KlejdaVariationalGraphAutoencoder(BaseGraphAutoEncoder):
 	def compute_reconstruction_loss(self, batch):
 		# Rozpakowanie batcha
 		x, adj, properties = batch
+		parts_num = properties['parts_num']
+
+		# Utworzenie masek
+		node_mask, adj_mask, feat_mask = self.create_masks(parts_num, device=x.device)
 
 		# Przepływ przez ten konkretny model
 		x_prime, a_prime, mu, logvar, z = self.forward(x, adj)
 
-		# Liczenie specyficznych strat
-		loss_a = self.criterion(a_prime, adj)
-		loss_x = self.criterion(x_prime, x)
-		weight_a = self.hparams.get('weight_a', 1000.0)
+		# Strata A
+		loss_a_unreduced = self.criterion(a_prime, adj)
+		loss_a_masked = loss_a_unreduced * adj_mask
+		loss_a = loss_a_masked.sum() / (adj_mask.sum() + 1e-6)
 
-		# Dywergencja Kullbacka_Liblera
-		kl_loss = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp(), dim=1)
-		kl_loss = torch.mean(kl_loss)  # Uśredniamy karę dla całego batcha
-		kl_weight = self.hparams.get('kl_weight', 1.0)  # Często beta < 1 pomaga zrekonstruować szczegóły
+		# Strata X
+		loss_x_unreduced = self.criterion(x_prime, x)
+		loss_x_masked = loss_x_unreduced * feat_mask
+		num_features = x.size(2)
+		loss_x = loss_x_masked.sum() / (feat_mask.sum() * num_features + 1e-6)
+
+		weight_a = self.hparams.weight_a
+		kl_weight = self.hparams.kl_weight
+
+		# Strata KL
+		kl_unreduced = -0.5 * (1 + logvar - mu.pow(2) - logvar.exp())
+		kl_masked = kl_unreduced * node_mask.unsqueeze(-1)
+		latent_dim = mu.size(-1)
+		kl_loss = kl_masked.sum() / (node_mask.sum() * latent_dim + 1e-6)
+
 
 		recon_loss = (weight_a * loss_a) + loss_x + (kl_weight * kl_loss)
+		# Dodatkowy, surowy błąd pomijający wagi i KL (Bo ono koniecznie musi być skalowane, ze względu na swoje olbrzymie wartości)
+		with torch.no_grad():
+			recon_loss_raw = loss_a + loss_x
 
+		metric_dict_a = self.compute_adj_metrics(a_prime,adj,adj_mask,self.hparams.joint_threshold)
 		log_dict = {
 			"loss_A": loss_a,
 			"loss_X": loss_x,
 			"loss_KL": kl_loss,
+			"recon_loss_raw": recon_loss_raw,
+			**metric_dict_a,
 		}
 
 		return recon_loss, z, properties, log_dict

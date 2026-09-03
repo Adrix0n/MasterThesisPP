@@ -153,3 +153,53 @@ class BaseGraphAutoEncoder(pl.LightningModule):
 
 	def forward(self, *args, **kwargs):
 		raise NotImplementedError("Klasa dziedzicząca musi implementować metodę 'forward'")
+
+	def compute_adj_metrics(self,a_prime, adj, adj_mask, threshold):
+		with torch.no_grad():
+			a_preds = (a_prime > threshold).float()
+
+			valid_mask = adj_mask.bool()
+			preds_flat = a_preds[valid_mask]
+			targets_flat = adj[valid_mask]
+
+			# Zliczanie True Positives, True Negatives itp.
+			TP = ((preds_flat == 1) & (targets_flat == 1)).sum().float()
+			TN = ((preds_flat == 0) & (targets_flat == 0)).sum().float()
+			FP = ((preds_flat == 1) & (targets_flat == 0)).sum().float()
+			FN = ((preds_flat == 0) & (targets_flat == 1)).sum().float()
+
+			eps = 1e-8
+
+			recall = TP / (TP + FN + eps)
+			specificity = TN / (TN + FP + eps)
+			precision = TP / (TP + FP + eps)
+			g_mean = torch.sqrt(recall * specificity)
+			f1_score = 2 * (precision * recall) / (precision + recall + eps)
+			fp_ratio = FP / (FP + TN + eps)
+
+		return {
+			"metric_A_recall": recall,
+			"metric_A_precision": precision,
+			"metric_A_g_mean": g_mean,
+			"metric_A_F1": f1_score,
+			"metric_A_fp_ratio": fp_ratio
+		}
+
+	def create_masks(self, parts_num, device):
+		max_nodes = self.hparams.max_nodes
+
+		# Maska węzłów
+		node_mask = torch.arange(max_nodes, device=device).unsqueeze(0) < parts_num.unsqueeze(1)
+		node_mask = node_mask.float()
+
+		# Maska cech
+		feat_mask = node_mask.unsqueeze(2)
+
+		# Maska macierzy sąsiedztwa
+		adj_mask = node_mask.unsqueeze(2) * node_mask.unsqueeze(1)
+
+		# Ignorowanie przekątnej
+		diag_mask = torch.eye(max_nodes, device=device).bool()
+		adj_mask.masked_fill_(diag_mask, 0.0)
+
+		return node_mask, adj_mask, feat_mask

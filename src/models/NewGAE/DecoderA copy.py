@@ -46,18 +46,12 @@ class DecoderA(nn.Module):
 
 		node_embeddings = x.view(batch_size, self.max_nodes, self.node_embed_dim)
 
-		# 1. Przygotowanie wektorów do mnożenia par
-		# Rozszerzamy wymiary, aby stworzyć macierz par
 		nodes_i = node_embeddings.unsqueeze(2)  # Kształt: [Batch, Nodes, 1, Features]
 		nodes_j = node_embeddings.unsqueeze(1)  # Kształt: [Batch, 1, Nodes, Features]
 
-		# 2. Iloczyn Hadamarda (element po elemencie)
-		# Broadcasting PyTorcha automatycznie stworzy kombinację każdego węzła z każdym.
-		# Z natury A * B == B * A, więc struktura jest w 100% symetryczna.
+
 		pair_features = nodes_i * nodes_j  # Kształt: [Batch, Nodes, Nodes, Features]
 
-		# 3. Ewaluacja par (generowanie logitów macierzy)
-		# Warstwa Linear działa na ostatnim wymiarze (Features), zwracając jedno prawdopodobieństwo
 		adj_logits = self.edge_predictor(pair_features)  # Kształt: [Batch, Nodes, Nodes, 1]
 		adj_logits = adj_logits.squeeze(-1) 
 

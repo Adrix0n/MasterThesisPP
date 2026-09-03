@@ -19,12 +19,12 @@ class GraphAutoencoder(BaseGraphAutoEncoder):
 			conv_channels=self.hparams.encoder_conv_channels,
 			dense_features=self.hparams.encoder_dense_features,
 			max_nodes=self.hparams.max_nodes,
-			use_mlp=self.hparams.get('encoder_use_mlp', True),
+			use_mlp=self.hparams.encoder_use_mlp,
 			config=config
 		)
 
 		# Warstwa rzutująca do przestrzeni ukrytej Z
-		self.fc_z = nn.Linear(self.encoder_backbone.output_dim, self.hparams.latent_dim)
+		self.fc_z = nn.Linear(int(self.encoder_backbone.output_dim), self.hparams.latent_dim)
 
 		# Inicjalizacja Dekodera A
 		self.decoder_a = DecoderA(
@@ -69,22 +69,18 @@ class GraphAutoencoder(BaseGraphAutoEncoder):
 		return x_prime, a_probs
 
 	def compute_reconstruction_loss(self, batch):
+		# Pobranie wartości z batcha
 		x, adj, properties = batch
 		parts_num = properties['parts_num']
 
+		# Utworzenie masek
+		node_mask, adj_mask, feat_mask = self.create_masks(parts_num, device=x.device)
+
+		# Przejście przez autoenkoder
 		x_prime, a_logits, z = self.forward(x, adj)
 
-		# Maski
-		node_mask = torch.arange(self.hparams.max_nodes, device=x.device).unsqueeze(0) < parts_num.unsqueeze(1)
-		node_mask = node_mask.float()
-		adj_mask = node_mask.unsqueeze(2) * node_mask.unsqueeze(1)
-
-		diag_mask = torch.eye(self.hparams.max_nodes, device=x.device).bool()
-		adj_mask.masked_fill_(diag_mask, 0.0)
-
-		feat_mask = node_mask.unsqueeze(2)
-
-		pos_weight = torch.tensor([self.hparams.get('pos_weight', 12.0)], device=x.device)
+		# Strata A
+		pos_weight = torch.tensor([self.hparams.pos_weight], device=x.device)
 		loss_a_unreduced = F.binary_cross_entropy_with_logits(
 			a_logits,
 			adj,
@@ -94,47 +90,27 @@ class GraphAutoencoder(BaseGraphAutoEncoder):
 		loss_a_masked = loss_a_unreduced * adj_mask
 		loss_a = loss_a_masked.sum() / (adj_mask.sum() + 1e-6)
 
-		# 2. Strata dla współrzędnych 3D (X)
+		# Strata X
 		loss_x_unreduced = F.huber_loss(x_prime, x, reduction='none')
 		loss_x_masked = loss_x_unreduced * feat_mask
 		num_features = x.size(2)
 		loss_x = loss_x_masked.sum() / (feat_mask.sum() * num_features + 1e-6)
 
-		weight_a = self.hparams.get('weight_a', 1000.0)
+		weight_a = self.hparams.weight_a
+		# Całkowity błąd
 		recon_loss = (weight_a * loss_a) + loss_x
 
+		# Dodatkowy, surowy błąd pomijający wagi
 		with torch.no_grad():
-			# Obliczanie dodatkowych metryk
-			a_probs = torch.sigmoid(a_logits)
-			# TODO: Jakiś threshold z configa tutaj?
-			a_preds = (a_probs > 0.5).float()
+			recon_loss_raw = loss_a + loss_x
 
-			valid_mask = adj_mask.bool()
-			preds_flat = a_preds[valid_mask]
-			targets_flat = adj[valid_mask]
-
-			# Zliczanie True Positives, True Negatives itp.
-			TP = ((preds_flat == 1) & (targets_flat == 1)).sum().float()
-			TN = ((preds_flat == 0) & (targets_flat == 0)).sum().float()
-			FP = ((preds_flat == 1) & (targets_flat == 0)).sum().float()
-			FN = ((preds_flat == 0) & (targets_flat == 1)).sum().float()
-
-			eps = 1e-8
-
-			recall = TP / (TP + FN + eps)
-			specificity = TN / (TN + FP + eps)
-			precision = TP / (TP + FP + eps)
-			g_mean = torch.sqrt(recall * specificity)
-			f1_score = 2 * (precision * recall) / (precision + recall + eps)
-
+		# Dodatkowe metryki
+		metric_dict_a = self.compute_adj_metrics(torch.sigmoid(a_logits), adj, adj_mask, self.hparams.joint_threshold)
 		log_dict = {
 			"loss_A": loss_a,
 			"loss_X": loss_x,
-			"metric_A_recall": recall,
-			"metric_A_precision": precision,
-			"metric_A_g_mean": g_mean,
-			"metric_A_F1": f1_score,
-			"metric_A_fp_ratio": FP / (FP + TN + eps)
+			"recon_loss_raw": recon_loss_raw,
+			**metric_dict_a,
 		}
 
 		return recon_loss, z, properties, log_dict

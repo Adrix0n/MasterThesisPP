@@ -47,6 +47,7 @@ decoder_x_conv_channels:
   - 128
 
 decoder_x_initial_channels: 128
+joint_threshold: 0.5
 
 pos_weight: 2.0
 weight_a: 0.1
@@ -61,5 +62,5 @@ count_valid: true # Czy to istnieje?
 
 locality_loss_type: "fitness" # 'fitness', 'parts_num' , 'similarity'
 locality_loss_method: "spearman" # 'pearson', 'spearman'
-locality_loss_lambda_val: 0.002
+locality_loss_lambda_val: 0.02
 save_dir: "./checkpoints"

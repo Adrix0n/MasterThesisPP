@@ -45,6 +45,8 @@ decoder_x_conv_channels:
   - 16
 
 decoder_x_initial_channels: 32
+joint_threshold: 0.5
+
 
 pos_weight: 2.0
 weight_a: 10.0

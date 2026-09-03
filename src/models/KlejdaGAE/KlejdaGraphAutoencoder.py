@@ -24,7 +24,7 @@ class KlejdaGraphAutoencoder(BaseGraphAutoEncoder):
 		)
 
 		# Warstwa rzutująca do przestrzeni ukrytej Z
-		self.fc_z = nn.Linear(self.encoder_backbone.output_dim, self.hparams.latent_dim)
+		self.fc_z = nn.Linear(int(self.encoder_backbone.output_dim), self.hparams.latent_dim)
 
 		# Inicjalizacja Dekodera A
 		self.decoder_a = KlejdaDecoderA(
@@ -57,21 +57,41 @@ class KlejdaGraphAutoencoder(BaseGraphAutoEncoder):
 	def compute_reconstruction_loss(self, batch):
 		# Rozpakowanie batcha
 		x, adj, properties = batch
+		parts_num = properties['parts_num']
+
+		# Utworzenie masek
+		node_mask, adj_mask, feat_mask = self.create_masks(parts_num, device=x.device)
 
 		# Przepływ przez ten konkretny model
 		x_prime, a_prime, z = self.forward(x, adj)
 
-		# Liczenie specyficznych strat
-		loss_a = self.criterion(a_prime, adj)
-		loss_x = self.criterion(x_prime, x)
-		weight_a = self.hparams.get('weight_a', 1000.0)
+		# Strata A
+		loss_a_unreduced = self.criterion(a_prime, adj)
+		loss_a_masked = loss_a_unreduced * adj_mask
+		loss_a = loss_a_masked.sum() / (adj_mask.sum() + 1e-6)
 
+		# Strata X
+		loss_x_unreduced = self.criterion(x_prime, x)
+		loss_x_masked = loss_x_unreduced * feat_mask
+		num_features = x.size(2)
+		loss_x = loss_x_masked.sum() / (feat_mask.sum() * num_features + 1e-6)
+
+		weight_a = self.hparams.weight_a
+		# Całkowity błąd
 		recon_loss = (weight_a * loss_a) + loss_x
 
+		# Dodatkowy, surowy błąd pomijający wagi
+		with torch.no_grad():
+			recon_loss_raw = loss_a + loss_x
+
+		# Dodatkowe metryki
+		metric_dict_a = self.compute_adj_metrics(a_prime, adj, adj_mask, self.hparams.joint_threshold)
 		# Słownik z dodatkowymi wartościami do zalogowania
 		log_dict = {
 			"loss_A": loss_a,
 			"loss_X": loss_x,
+			"recon_loss_raw":recon_loss_raw,
+			**metric_dict_a
 		}
 
 		# Zgodnie z kontraktem, zwracamy 4 rzeczy do klasy bazowej

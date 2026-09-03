@@ -33,7 +33,6 @@ class DecoderX(nn.Module):
 			)
 			current_in_features = out_features
 
-		# 2. Rzutowanie wyjścia warstw gęstych na strukturę węzłów
 		conv_channels = config['decoder_x_conv_channels']
 		initial_node_dim = conv_channels[0]
 

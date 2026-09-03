@@ -28,8 +28,10 @@ decoder_x_dense_features: # od 1 do 7 warstw
 weight_a: 500.0
 kl_weight: 0.007
 
+batch_size: 256
 count_valid: true
 max_epochs: 100
+joint_threshold: 0.5
 
 locality_loss_type: "fitness" # 'fitness', 'parts_num' , 'similarity'
 locality_loss_method: "spearman" # 'pearson', 'spearman'

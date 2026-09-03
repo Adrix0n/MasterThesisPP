@@ -19,7 +19,7 @@ class VariationalGraphAutoencoder(BaseGraphAutoEncoder):
 			conv_channels=self.hparams.encoder_conv_channels,
 			dense_features=self.hparams.encoder_dense_features,
 			max_nodes=self.hparams.max_nodes,
-			use_mlp=self.hparams.get('encoder_use_mlp', True),
+			use_mlp=self.hparams.encoder_use_mlp,
 			config=config
 		)
 
@@ -87,23 +87,18 @@ class VariationalGraphAutoencoder(BaseGraphAutoEncoder):
 		return x_prime, a_probs
 
 	def compute_reconstruction_loss(self, batch):
+		# Pobranie wartości z batcha
 		x, adj, properties = batch
 		parts_num = properties['parts_num']
 
+		# Utworzenie masek
+		node_mask, adj_mask, feat_mask = self.create_masks(parts_num, device=x.device)
+
+		# Przejście przez autoenkoder
 		x_prime, a_logits, mu, logvar, z = self.forward(x, adj)
 
-		# Maski
-		node_mask = torch.arange(self.hparams.max_nodes, device=x.device).unsqueeze(0) < parts_num.unsqueeze(1)
-		node_mask = node_mask.float()
-		adj_mask = node_mask.unsqueeze(2) * node_mask.unsqueeze(1)
-
-		diag_mask = torch.eye(self.hparams.max_nodes, device=x.device).bool()
-		adj_mask.masked_fill_(diag_mask, 0.0)
-
-		feat_mask = node_mask.unsqueeze(2)
-
+		# Strata A
 		pos_weight = torch.tensor([self.hparams.pos_weight], device=x.device)
-
 		loss_a_unreduced = F.binary_cross_entropy_with_logits(
 			a_logits,
 			adj,
@@ -113,53 +108,37 @@ class VariationalGraphAutoencoder(BaseGraphAutoEncoder):
 		loss_a_masked = loss_a_unreduced * adj_mask
 		loss_a = loss_a_masked.sum() / (adj_mask.sum() + 1e-6)
 
+		# Strata X
 		loss_x_unreduced = F.huber_loss(x_prime, x, reduction='none')
 		loss_x_masked = loss_x_unreduced * feat_mask
 		num_features = x.size(2)
 		loss_x = loss_x_masked.sum() / (feat_mask.sum() * num_features + 1e-6)
 
-		# Dywergencja Kullbacka-Leiblera (kara za odchylenie z od rozkładu normalnego N(0,1))
-		kl_loss = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp(), dim=1)
-		kl_loss = torch.mean(kl_loss)
+		# Strata KL
+		kl_unreduced = -0.5 * (1 + logvar - mu.pow(2) - logvar.exp())
+		kl_masked = kl_unreduced * node_mask.unsqueeze(-1)
+		latent_dim = mu.size(-1)
+		kl_loss = kl_masked.sum() / (node_mask.sum() * latent_dim + 1e-6)
 
-		weight_a = self.hparams.get('weight_a', 500.0)
-		kl_weight = self.hparams.get('kl_weight', 0.007)
+
+		weight_a = self.hparams.weight_a
+		kl_weight = self.hparams.kl_weight
 
 		# Całkowity błąd
 		recon_loss = (weight_a * loss_a) + loss_x + (kl_weight * kl_loss)
 
+		# Dodatkowy, surowy błąd pomijający wagi i KL (Bo ono koniecznie musi być skalowane, ze względu na swoje olbrzymie wartości)
 		with torch.no_grad():
-			# Obliczanie dodatkowych metryk
-			a_probs = torch.sigmoid(a_logits)
-			# TODO: Jakiś threshold z configa tutaj?
-			a_preds = (a_probs > 0.5).float()
+			recon_loss_raw = loss_a + loss_x
 
-			valid_mask = adj_mask.bool()
-			preds_flat = a_preds[valid_mask]
-			targets_flat = adj[valid_mask]
-
-			# Zliczanie True Positives, True Negatives itp.
-			TP = ((preds_flat == 1) & (targets_flat == 1)).sum().float()
-			TN = ((preds_flat == 0) & (targets_flat == 0)).sum().float()
-			FP = ((preds_flat == 1) & (targets_flat == 0)).sum().float()
-			FN = ((preds_flat == 0) & (targets_flat == 1)).sum().float()
-
-			eps = 1e-8
-
-			recall = TP / (TP + FN + eps)
-			specificity = TN / (TN + FP + eps)
-			precision = TP / (TP + FP + eps)
-			g_mean = torch.sqrt(recall * specificity)
-			f1_score = 2 * (precision * recall) / (precision + recall + eps)
+		# Dodatkowe metryki
+		metric_dict_a = self.compute_adj_metrics(torch.sigmoid(a_logits),adj,adj_mask,self.hparams.joint_threshold)
 		log_dict = {
 			"loss_A": loss_a,
 			"loss_X": loss_x,
 			"loss_KL": kl_loss,
-			"metric_A_recall": recall,
-			"metric_A_precision": precision,
-			"metric_A_g_mean": g_mean,
-			"metric_A_F1": f1_score,
-			"metric_A_fp_ratio": FP / (FP + TN + eps)
+			"recon_loss_raw": recon_loss_raw,
+			**metric_dict_a,
 		}
 
 		return recon_loss, z, properties, log_dict
