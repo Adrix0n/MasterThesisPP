@@ -93,5 +93,27 @@ class FramsticksGraphDataset(Dataset):
 				except (ValueError, IndexError):
 					pass
 
+		x_matrix, a_matrix = FramsticksGraphDataset.sort_matrices_ascending(x_matrix, a_matrix)
 		# Zwracamy 3 macierze oraz liczbę węzłów
 		return x_matrix, a_matrix, part_idx
+
+	@staticmethod
+	def sort_matrices_ascending(x_unsorted, a_unsorted):
+		# Opakowujemy wiersze X w indeksy
+		x_unsorted_with_indices = list(enumerate(x_unsorted.tolist()))
+
+		# Sortujemy rosnąco po kolei względem X, Y, Z
+		x_sorted_with_indices = sorted(
+			x_unsorted_with_indices,
+			key=lambda item: (item[1][0], item[1][1], item[1][2])
+		)
+
+		sorted_indices = [item[0] for item in x_sorted_with_indices]
+		idx_tensor = torch.tensor(sorted_indices, dtype=torch.long, device=x_unsorted.device)
+
+		x_sorted = x_unsorted[idx_tensor]
+
+		# Macierz A należy posortować zarówno po wierszach jak i po kolumnach
+		a_sorted = a_unsorted[idx_tensor][:, idx_tensor]
+
+		return x_sorted, a_sorted

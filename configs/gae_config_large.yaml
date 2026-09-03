@@ -1,5 +1,5 @@
 in_channels: 3
-latent_dim: 150
+latent_dim: 15
 learning_rate: 0.004
 max_nodes: 15
 

@@ -10,8 +10,11 @@
   - [ ] w CMA_ES nie naprawiać osobników, żeby optymalizacja nie chciała dążyć coraz bardziej w zepsute rejiny
 - [ ] Zrobić wizualizację latent space. Poprzez grid search na przykład. Pokazać, w jaki sposób ustawił się przestrzeń ukryta. Czy drobne zmiany drobnie zmieniają osobnika
 - [ ] Wyszukać gotowego rozwiązania grafowego, gotowego autoenkodera grafowego, spytać czat o to
+  - [ ] Wizualizacja ścieżki od słabego fitness do najlepszego fitness
+  - [ ] Zmiany pojedynczych wartości w wektorze
+  - [ ] Wizualizacja "strefy bezpiecznej", miejsca, po przekroczeniu którego generuje się zdegenerowany osobnik
 - [ ] Poprawić ostatecznie implementacje
-  - [ ] Warstwa konwolucyjna grafowa
+  - [X] Warstwa konwolucyjna grafowa
   - [ ] Zastanowić się, co właściwie robi dywergencja Kullbacka_Leiblera
     - [ ] Dodatkowo sprawdzić inne metody wpływania na rozłożenie przestrzeni ukrytej
 - [ ] Przygotować skrypt/notebook do automatycznego przeprowadzenia wybranych eksperymentów (potrzebne do slurma)

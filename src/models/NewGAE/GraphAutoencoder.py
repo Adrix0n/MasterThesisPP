@@ -74,14 +74,17 @@ class GraphAutoencoder(BaseGraphAutoEncoder):
 
 		x_prime, a_logits, z = self.forward(x, adj)
 
-
 		# Maski
 		node_mask = torch.arange(self.hparams.max_nodes, device=x.device).unsqueeze(0) < parts_num.unsqueeze(1)
 		node_mask = node_mask.float()
 		adj_mask = node_mask.unsqueeze(2) * node_mask.unsqueeze(1)
+
+		diag_mask = torch.eye(self.hparams.max_nodes, device=x.device).bool()
+		adj_mask.masked_fill_(diag_mask, 0.0)
+
 		feat_mask = node_mask.unsqueeze(2)
 
-		pos_weight = torch.tensor([12.0], device=x.device)
+		pos_weight = torch.tensor([self.hparams.get('pos_weight', 12.0)], device=x.device)
 		loss_a_unreduced = F.binary_cross_entropy_with_logits(
 			a_logits,
 			adj,
@@ -89,16 +92,16 @@ class GraphAutoencoder(BaseGraphAutoEncoder):
 			pos_weight=pos_weight
 		)
 		loss_a_masked = loss_a_unreduced * adj_mask
-		loss_a = loss_a_masked.sum() / (adj_mask.sum() + 1e-8)
+		loss_a = loss_a_masked.sum() / (adj_mask.sum() + 1e-6)
 
 		# 2. Strata dla współrzędnych 3D (X)
 		loss_x_unreduced = F.huber_loss(x_prime, x, reduction='none')
 		loss_x_masked = loss_x_unreduced * feat_mask
-		loss_x = loss_x_masked.sum() / (feat_mask.sum() + 1e-8)
+		num_features = x.size(2)
+		loss_x = loss_x_masked.sum() / (feat_mask.sum() * num_features + 1e-6)
 
 		weight_a = self.hparams.get('weight_a', 1000.0)
 		recon_loss = (weight_a * loss_a) + loss_x
-
 
 		with torch.no_grad():
 			# Obliczanie dodatkowych metryk
@@ -122,7 +125,7 @@ class GraphAutoencoder(BaseGraphAutoEncoder):
 			specificity = TN / (TN + FP + eps)
 			precision = TP / (TP + FP + eps)
 			g_mean = torch.sqrt(recall * specificity)
-
+			f1_score = 2 * (precision * recall) / (precision + recall + eps)
 
 		log_dict = {
 			"loss_A": loss_a,
@@ -130,6 +133,7 @@ class GraphAutoencoder(BaseGraphAutoEncoder):
 			"metric_A_recall": recall,
 			"metric_A_precision": precision,
 			"metric_A_g_mean": g_mean,
+			"metric_A_F1": f1_score,
 			"metric_A_fp_ratio": FP / (FP + TN + eps)
 		}
 
