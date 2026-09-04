@@ -71,5 +71,6 @@ class ConvLayer(nn.Module):
 		x = x.transpose(1, 2)  # (Batch, Nodes, Features) -> (B, Features, Nodes)
 		x = self.norm(x)
 		x = x.transpose(1, 2)  # Back to (Batch, Nodes, Features)
+		x = torch.clamp(x, min=-30.0, max=30.0)
 		x = self.act(x)
 		return x

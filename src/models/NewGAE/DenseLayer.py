@@ -53,6 +53,8 @@ class DenseLayer(nn.Module):
 	def forward(self, x: torch.Tensor) -> torch.Tensor:
 		x = self.linear(x)
 		x = self.norm(x)
+		# Zapobiega błędom wynikającym ze zbyt dużych wartości e^x
+		x = torch.clamp(x, min=-30.0, max=30.0)
 		x = self.act(x)
 		x = self.dropout(x)
 

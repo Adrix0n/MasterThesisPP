@@ -116,9 +116,7 @@ class VariationalGraphAutoencoder(BaseGraphAutoEncoder):
 
 		# Strata KL
 		kl_unreduced = -0.5 * (1 + logvar - mu.pow(2) - logvar.exp())
-		kl_masked = kl_unreduced * node_mask.unsqueeze(-1)
-		latent_dim = mu.size(-1)
-		kl_loss = kl_masked.sum() / (node_mask.sum() * latent_dim + 1e-6)
+		kl_loss = kl_unreduced.sum(dim=-1).mean()
 
 
 		weight_a = self.hparams.weight_a

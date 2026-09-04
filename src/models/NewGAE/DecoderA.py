@@ -46,7 +46,8 @@ class DecoderA(nn.Module):
 		node_embeddings = x.view(batch_size, self.max_nodes, self.node_embed_dim)
 		scaled_embeddings = node_embeddings * self.edge_weights
 
-		adj_logits = torch.bmm(node_embeddings, scaled_embeddings.transpose(1, 2))
+		adj_logits = torch.bmm(node_embeddings, scaled_embeddings.transpose(1, 2).contiguous())
 		adj_logits = adj_logits + self.edge_bias
+		adj_logits = torch.clamp(adj_logits, min=-20.0, max=20.0)
 
 		return adj_logits
