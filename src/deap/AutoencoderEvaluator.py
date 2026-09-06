@@ -14,7 +14,7 @@ class AutoencoderEvaluator:
 		self.postProcessor = FramsticksPostProcessor()
 
 	def __call__(self, individual):
-		latent_vector = torch.tensor([individual], dtype=torch.double)
+		latent_vector = torch.tensor([individual], dtype=torch.float32)
 
 		# Dekodowanie wektora przestrzeni ukrytej
 		with torch.no_grad():
