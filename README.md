@@ -1,25 +1,19 @@
 # TODO 3 (ostatnie)
-- [ ] Porządek w kodzie
-  - [X] Komentarze
-  - [ ] Naparwić problem z dekodowaniem, który sprawia, że się całość zawiesza.
 - [ ] CMA-ES
   - [ ] Zastosować techniki douczania:
     - [ ] Kolejke odrzucającą najstarsze osobniki, utrzymująca stały rozmiar 
     - [ ] Z dodawaniem osobników do zbioru
     - [ ] Kolejka odrzucająca najsłabsze osobniki
   - [ ] w CMA_ES nie naprawiać osobników, żeby optymalizacja nie chciała dążyć coraz bardziej w zepsute rejiny
-- [ ] Zrobić wizualizację latent space. Poprzez grid search na przykład. Pokazać, w jaki sposób ustawił się przestrzeń ukryta. Czy drobne zmiany drobnie zmieniają osobnika
-  - [ ] Ładne reprezentowanie osobników na podstawie macierzy X oraz A (wizualizacja 3D)
-  - [ ] Wizualizacja ścieżki od słabego fitness do najlepszego fitness
-  - [ ] Zmiany pojedynczych wartości w wektorze
-  - [ ] Wizualizacja "strefy bezpiecznej", miejsca, po przekroczeniu którego generuje się zdegenerowany osobnik
-- [ ] Wyszukać gotowego rozwiązania grafowego, gotowego autoenkodera grafowego, spytać czat o to
-- [ ] Poprawić ostatecznie implementacje
+- [X] Poprawić ostatecznie implementacje
   - [X] Warstwa konwolucyjna grafowa
   - [X] Zastanowić się, co właściwie robi dywergencja Kullbacka_Leiblera
     - Bada, czy rozkład wartości przestrzeni ukrytej Z rzeczywiście zgadza się z zadanym rozkładem normalnym (wektor np. 15 wartości, wartości te mają rozkład bliski rozkładowi normalnemu)
 - [ ] Przygotować skrypt/notebook do automatycznego przeprowadzenia wybranych eksperymentów (potrzebne do slurma)
 - [ ] Przygotować notebooki z wizualizacją odpowiednich wyników
+  - [ ] Wizualizacje uczenia
+  - [ ] Wykresy porównawcze kombinacji autoenkodera
+  - [ ] Wykresy podobne do tych z Klejdy
 
 # TODO 2
 - [?] Zaimplementować locality loss dla similarity
