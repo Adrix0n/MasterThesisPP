@@ -12,11 +12,12 @@ class PostProcessFlag(Flag):
 
 class FramsticksPostProcessor:
 	def __init__(self, max_joint_length: float = 2.0, max_iterations: int = 100, threshold: float = 0.5,
-				 epsilon: float = 1e-5):
+				 epsilon: float = 1e-5, repair=True):
 		self.max_len = max_joint_length
 		self.max_it = max_iterations
 		self.threshold = threshold  # Próg określający, czy dane połączenie istnieje (1) czy nie istnieje (0_
 		self.epsilon = epsilon
+		self.repair = repair
 
 	def process(self, x_prime: torch.Tensor, a_prime: torch.Tensor):
 		x = x_prime.detach().cpu().numpy()
@@ -28,7 +29,7 @@ class FramsticksPostProcessor:
 		a_sym = np.logical_or(a_bin, a_bin.T).astype(int)
 		# Wyzerowanie przekątnej
 		# TODO: Rozważyć, czy powinno wyzerowywać przekątną. Działając w ten sposób, autoenkoder nie będzie zwracał uwagi na to, że tworzy niepoprawne rozwiązanie, bo z jego perspektywy macierz z wyzerowaną przekątną i nie wyzerowaną będzie taka sama
-		np.fill_diagonal(a_sym, 0)
+		# np.fill_diagonal(a_sym, 0)
 
 		# wyznaczenie listy istniejących węzłów
 		# Sprawdzany jest każdy wiersz, czy istnieje w nim jakaś jedynka, czyli połączenie z innym
@@ -67,18 +68,18 @@ class FramsticksPostProcessor:
 					G.add_edge(node_map[i], node_map[j])
 
 		# Naprawa połączeń o zerowej długości
-		if self._has_zero_length_joints(G):
+		if self._has_zero_length_joints(G) and self.repair:
 			flags |= PostProcessFlag.INVALID_ZERO_LENGTH_JOINTS
 			self._fix_zero_length_joints(G)
 
 		# Naprawa rozdzielonych podgrup
-		if not nx.is_connected(G):
+		if not nx.is_connected(G) and self.repair:
 			flags |= PostProcessFlag.INVALID_SUBGROUPS
 			self._repair_isolated_parts(G)
 
 		# Naprawa zbyt długich połączeń
 		repair_tries = 0
-		if self._has_too_long_joints(G):
+		if self._has_too_long_joints(G) and self.repair:
 			flags |= PostProcessFlag.INVALID_TO_LONG_PARTS
 			is_successful, repair_tries = self._repair_too_long_joints(G)
 			if not is_successful:

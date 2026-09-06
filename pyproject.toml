@@ -5,5 +5,6 @@ description = "Add your description here"
 requires-python = ">=3.12"
 dependencies = [
     "ipykernel>=7.2.0",
+    "ipympl>=0.10.0",
     "kaleido>=1.4.0",
 ]

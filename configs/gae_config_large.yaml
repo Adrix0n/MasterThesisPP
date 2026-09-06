@@ -53,9 +53,10 @@ pos_weight: 3.0
 weight_a: 0.2
 kl_weight: 0.0001
 
-use_accumulator: true
-batch_size: 128
+use_accumulator: false
+batch_size: 256
 max_epochs: 100
+supp_training_epochs: 16
 
 locality_loss_type: "fitness" # 'fitness', 'parts_num' , 'similarity'
 locality_loss_method: "spearman" # 'pearson', 'spearman'

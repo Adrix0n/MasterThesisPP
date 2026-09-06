@@ -11,7 +11,7 @@ class AutoencoderEvaluator:
 		self.frams_lib = frams_lib
 		self.opt_criteria= opt_criteria
 		self.config = config
-		self.postProcessor = FramsticksPostProcessor()
+		self.postProcessor = FramsticksPostProcessor(repair=False)
 
 	def __call__(self, individual):
 		latent_vector = torch.tensor([individual], dtype=torch.float32)

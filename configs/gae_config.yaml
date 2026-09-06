@@ -55,6 +55,7 @@ kl_weight: 0.001
 use_accumulator: false
 batch_size: 256
 max_epochs: 100
+supp_training_epochs: 16
 
 count_valid: true # Czy to istnieje?
 

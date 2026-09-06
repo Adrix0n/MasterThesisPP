@@ -1,11 +1,10 @@
 from deap import tools
 from utils.FramsticksPostProcessor import PostProcessFlag
-def run_cma_es_with_validation(toolbox, ngen, stats, halloffame, verbose=True, validity_threshold=0.2):
+def run_cma_es_with_validation(toolbox, ngen, stats, halloffame, verbose=True):
 	logbook = tools.Logbook()
 	logbook.header = ['gen', 'nevals', 'valid_recon_ratio','F_ZERO_LEN','F_SUBGROUPS','F_LONG_PARTS', 'valid_frams_ratio'] + (stats.fields if stats else [])
 	created_individuals = []
 
-	reconstruction_ratio_above_threshold = True
 	for gen in range(ngen):
 		pop = toolbox.generate()
 		results = toolbox.map(toolbox.evaluate, pop)
@@ -61,4 +60,4 @@ def run_cma_es_with_validation(toolbox, ngen, stats, halloffame, verbose=True, v
 		# 	reconstruction_ratio_above_threshold = False
 		# 	break
 
-	return pop, logbook, reconstruction_ratio_above_threshold, created_individuals
+	return pop, logbook, created_individuals

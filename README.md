@@ -1,10 +1,10 @@
 # TODO 3 (ostatnie)
-- [ ] CMA-ES
-  - [ ] Zastosować techniki douczania:
-    - [ ] Kolejke odrzucającą najstarsze osobniki, utrzymująca stały rozmiar 
-    - [ ] Z dodawaniem osobników do zbioru
-    - [ ] Kolejka odrzucająca najsłabsze osobniki
-  - [ ] w CMA_ES nie naprawiać osobników, żeby optymalizacja nie chciała dążyć coraz bardziej w zepsute rejiny
+- [X] CMA-ES
+  - [X] Zastosować techniki douczania:
+    - [X] Kolejke odrzucającą najstarsze osobniki, utrzymująca stały rozmiar 
+    - [X] Z dodawaniem osobników do zbioru
+    - [X] Kolejka odrzucająca najsłabsze osobniki
+  - [X] w CMA_ES nie naprawiać osobników, żeby optymalizacja nie chciała dążyć coraz bardziej w zepsute rejiny
 - [X] Poprawić ostatecznie implementacje
   - [X] Warstwa konwolucyjna grafowa
   - [X] Zastanowić się, co właściwie robi dywergencja Kullbacka_Leiblera
