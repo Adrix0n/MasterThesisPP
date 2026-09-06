@@ -18,8 +18,6 @@ IS_SLURM = False
 # In[4]:
 
 
-get_ipython().run_line_magic('load_ext', 'autoreload')
-get_ipython().run_line_magic('autoreload', '2')
 import torch
 from pathlib import Path
 from torch.utils.data import Dataset, DataLoader, random_split
