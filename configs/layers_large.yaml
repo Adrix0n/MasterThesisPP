@@ -1,0 +1,24 @@
+encoder_conv_channels:
+  - 128
+  - 256
+
+# Płytki lejek - tylko 2 szybkie przejścia
+encoder_dense_features:
+  - 512
+  - 128
+
+# --- DEKODER A (Topologia) ---
+# Szybkie rozpakowanie
+decoder_a_hidden_dims:
+  - 128
+  - 256
+
+# --- DEKODER X (Geometria 3D) ---
+decoder_x_dense_features:
+  - 128
+  - 256
+
+decoder_x_conv_channels:
+  - 128
+
+decoder_x_initial_channels: 128
