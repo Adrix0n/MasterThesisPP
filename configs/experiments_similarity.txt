@@ -1,0 +1,16 @@
+--exp_id 1001 --run_name "exp_1001_gae_lat3_small_loc-similarity" --group "grid_search_gae" --model_type gae --locality_loss_type similarity --latent_dim 3 --layers_config small
+--exp_id 1002 --run_name "exp_1002_gae_lat3_large_loc-similarity" --group "grid_search_gae" --model_type gae --locality_loss_type similarity --latent_dim 3 --layers_config large
+--exp_id 1003 --run_name "exp_1003_gae_lat10_small_loc-similarity" --group "grid_search_gae" --model_type gae --locality_loss_type similarity --latent_dim 10 --layers_config small
+--exp_id 1004 --run_name "exp_1004_gae_lat10_large_loc-similarity" --group "grid_search_gae" --model_type gae --locality_loss_type similarity --latent_dim 10 --layers_config large
+--exp_id 1005 --run_name "exp_1005_gae_lat15_small_loc-similarity" --group "grid_search_gae" --model_type gae --locality_loss_type similarity --latent_dim 15 --layers_config small
+--exp_id 1006 --run_name "exp_1006_gae_lat15_large_loc-similarity" --group "grid_search_gae" --model_type gae --locality_loss_type similarity --latent_dim 15 --layers_config large
+--exp_id 1007 --run_name "exp_1007_gae_lat100_small_loc-similarity" --group "grid_search_gae" --model_type gae --locality_loss_type similarity --latent_dim 100 --layers_config small
+--exp_id 1008 --run_name "exp_1008_gae_lat100_large_loc-similarity" --group "grid_search_gae" --model_type gae --locality_loss_type similarity --latent_dim 100 --layers_config large
+--exp_id 1009 --run_name "exp_1009_vgae_lat3_small_loc-similarity" --group "grid_search_gae" --model_type vgae --locality_loss_type similarity --latent_dim 3 --layers_config small
+--exp_id 1010 --run_name "exp_1010_vgae_lat3_large_loc-similarity" --group "grid_search_gae" --model_type vgae --locality_loss_type similarity --latent_dim 3 --layers_config large
+--exp_id 1011 --run_name "exp_1011_vgae_lat10_small_loc-similarity" --group "grid_search_gae" --model_type vgae --locality_loss_type similarity --latent_dim 10 --layers_config small
+--exp_id 1012 --run_name "exp_1012_vgae_lat10_large_loc-similarity" --group "grid_search_gae" --model_type vgae --locality_loss_type similarity --latent_dim 10 --layers_config large
+--exp_id 1013 --run_name "exp_1013_vgae_lat15_small_loc-similarity" --group "grid_search_gae" --model_type vgae --locality_loss_type similarity --latent_dim 15 --layers_config small
+--exp_id 1014 --run_name "exp_1014_vgae_lat15_large_loc-similarity" --group "grid_search_gae" --model_type vgae --locality_loss_type similarity --latent_dim 15 --layers_config large
+--exp_id 1015 --run_name "exp_1015_vgae_lat100_small_loc-similarity" --group "grid_search_gae" --model_type vgae --locality_loss_type similarity --latent_dim 100 --layers_config small
+--exp_id 1016 --run_name "exp_1016_vgae_lat100_large_loc-similarity" --group "grid_search_gae" --model_type vgae --locality_loss_type similarity --latent_dim 100 --layers_config large
