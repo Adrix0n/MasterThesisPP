@@ -1,3 +1,12 @@
+# TODO 4 praca
+- [X] Przygotować diagramy warstw gęstej i konwolucyjnej
+- [X] Przygotować diagramy enkodera, dekodera A i dekodera X
+- [X] Przetłumaczenie rzdziału 3
+- [ ] Usunięcie appendixów
+- [ ] Przygotowanie rozdziału 4
+- [ ] Przygotwanie  skryptu do obsługi wyników
+- [ ] Przygotwanie wyników, dopisanie, przetłuaczenie i fajrant
+
 # TODO 3 (ostatnie)
 - [X] CMA-ES
   - [X] Zastosować techniki douczania:
@@ -9,17 +18,12 @@
   - [X] Warstwa konwolucyjna grafowa
   - [X] Zastanowić się, co właściwie robi dywergencja Kullbacka_Leiblera
     - Bada, czy rozkład wartości przestrzeni ukrytej Z rzeczywiście zgadza się z zadanym rozkładem normalnym (wektor np. 15 wartości, wartości te mają rozkład bliski rozkładowi normalnemu)
-- [ ] Przygotować skrypt/notebook do automatycznego przeprowadzenia wybranych eksperymentów (potrzebne do slurma)
+- [X] Przygotować skrypt/notebook do automatycznego przeprowadzenia wybranych eksperymentów (potrzebne do slurma)
 - [ ] Przygotować notebooki z wizualizacją odpowiednich wyników
   - [ ] Wizualizacje uczenia
   - [ ] Wykresy porównawcze kombinacji autoenkodera
   - [ ] Wykresy podobne do tych z Klejdy
 
-# TODO 2
-- [?] Zaimplementować locality loss dla similarity
-  - [ ] Zweryfikować, dlaczego przetwarza się niemiłosiernie długo
-  - [ ] Implementacja treningu równoległego, aby przyspieszyć i urealnić proces przeprowadzania eksperymentów
-  - 
 # TODO
 - [ ] Przygotować prezentację z wynikami
   - [ ] Omówienie architektury

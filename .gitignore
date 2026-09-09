@@ -1,7 +1,12 @@
 /external
 /.venv
 /notebooks/checkpoints
+/notebooks/checkpoints_slurm
+/slurm_checkpoints
+/slurm_checkpoints_2
 /results
 uv.lock
 /.idea
 __pycache__
+*.zip
+*.png

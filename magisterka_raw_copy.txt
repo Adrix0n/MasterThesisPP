@@ -1,0 +1,111 @@
+Rozdział 3 - Zaproponowane podejście
+-Wstęp
+Celem proponowanego podejścia jest zaprezentowanie innego rozwiązania możliwego do wykorzystania przy różnych problemach optymalizacji. Wykorzystano grafowe autoenkodery w celu wyuczenia się struktury zbioru i odpowiedniego zakodowania go w przestrzeni ukrytej. Ostatecznie w tej przestrzenii uruchomiono optymalizację przy użyciu algorytmu CMA-ES. Docelowo przestrzeń uzyskana przez autoenkoder powinna być gładsza i łatwiejsza do przemieszczania się dla CMA-ES.
+
+
+-Środowisko
+W pracy wykorzystano środowisko Framsticks oraz bibliotekę DEAP. Framsticks pozwolił na stworzenie zbioru osobników, ewaluację osobników, przeprowadzenie bazowej ewolucji. DEAP jest biblioteką języka Python, która umożliwia przeprowadzanie obliczeń ewolucyjnych.
+
+
+-Dataset
+Zbiór danych stanowią osobnicy uzyskiwaniu w trakcie wielu iteracji ewolucji w wykorzystanym środowisku. Aby umożliwić odpowiednie obliczenia i dostarczyć autoenkoderomi odpowiednie dane, konieczna stała nie konwersja domyślnej reprezentacji genotypowej f0 na reprezentacje w postaci macierzy cech X oraz macierzy sąsiedztwa A. W tym celu przygotowano moduł konwertujący osobników na wymienione macierze.
+Konwersja wygląda następująco:
+- macierz A o wymiarach n x n, gdzie n to maksymalna liczba elementów (parts). Jeżeli pomiędzy węzłami n1 oraz n2 występuje połączenie, to A[n1][n2] = 1 oraz A[n2][n1] = 1. W pozostałych przypadkach oraz na przekątnej wartości wynoszą 0.
+- macierz X o wymiarach n x f, gdzie f to liczba cech danego elementu (parta). W pracy wykorzystano jedynie cechy odnoszące się do pozycji wyrażonej w postaci x, y, z, stąd f = 3.
+
+Element (part) w środowisku Framsticks posiada wiele cech. Oprócz pozycji w postaci wartości x, y, z istnieją także takie cechy jak np. stiffness (stif), rotation stiffness (rotstiff), stamina (stam). Część z nich, jak stamina, jest obojętna dla omawianego problemu i została pominięta w rozważaniu. Rozmiar cech wpływa na zaawansowaność reprezentacji i przestrzeń poszukiwań. W pracy skupiono się jedynie na optymalizacji pozycji elementów, aby nie obciążać przestrzeni ukrytej koniecznością nauki dużej liczby cech.
+Problemem wymienionej reprezentacji jest fakt, że większość osobników składa się z mniejszej liczby elementów niż maksymalna dostępna liczba elementów n. Pozostałe wiersze macierzy X mają zerową wartość, a w trakcie uczenia i obliczania straty wartości z nadmiarowych wierszy są odpowiednio maskowane.
+Na potrzeby doświadczenia przyjęto maksymalną liczbę elementów n = 15.
+
+(Przykład kodowania?)
+
+-Charakterystyka zbioru danych
+Do wytrenowania modeli grafowych autoenkoderów wykorzystano zbiór osobników uzyskany w wyniku przeprowadzenia wielu iteracji algorytmu ewolucyjnego. Ewolucje przeprowadzono przy wykorzystaniu środowiska Framsticks i biblioteki DEAP. Osobników dobrano zapamiętując pojedynczy hall of fame każdej z generacji. Następnie odfiltrowano duplikaty, powstające, gdy przez więcej niż jedną iterację nie następuje zmiana osobnika w hall of fame.
+Ewolucja za każdym razem trwała 100 generacji, populacja wynosiła 140 osobników, selekcja odbywała się turniejem o rozmiarze 4, mutacja odbywała się z prawdopodobieństwem 0.9, nie wykorzystywano krzyżowania. Celem ewolucji była maksymalizacja wartości vertpos, czyli średniej wysokości węzłów. Zebrano łącznie 59762 osobników, ich wartości dopasowania oraz reprezentacji f0.
+Rozkład i histogram prezentuje się następująco:
+
+(wykresy i histogram, tabela)
+
+Średnie dopasowanie wynosi ..., natomiast maksymalne dopasowanie wynosi ...
+
+Do celów nauczania modelu podzielono zbiór na część treningową i walidującą w stosunku 4:1, z przemieszaniem zbioru treningowego przy każdej epoce.
+
+
+-Autoenkoder
+	Przygotowany autoenkoder składa się z trzech sieci: enkodera oraz dwóch dekoderów, oddzielnie dla macierzy X oraz A. Każda z podsieci zawiera własne warstwy gęste lub konwolucyjne. W ramach eksperymentu przygotowano autoenkoder zwykły oraz jego wariacyjną wersję.
+	-Własna warstwa gęsta oraz konwolucyjna
+		Własna warstwa gęsta wykorzystana w implementacji jest domyślną warstwą liniową rozbudowaną o normalizację, clamp, aktywację oraz dropout. Za funkcję aktywacji wybrano funkcję silu, o wzorze postaci ....  W przeprowadzonych testach okazało się, że zastosowane dropout pogarszało uzyskiwane wyniki, stąd ostatecznie z niego zrezygnowano.
+		Własna warstwa konwolucyjna jest grafową warstwą konwolucyjną opatrzoną o dodatkowe warstwy, te same co w przypadku warstwy gęstej. Różnicę stanowi zastosowanie w rdzeniu warstwy GraphConv, której stosuje następujący operator: https://pytorch-geometric.readthedocs.io/en/latest/generated/torch_geometric.nn.conv.GraphConv.html#torch_geometric.nn.conv.GraphConv
+
+	-Podejście GAE oraz VGAE
+		W ramach eksperymentu przygotowano dwa podejścia sieci neuronowych:
+		 -Grafowy Autoenkoder (GAE) - Tradycyjny autoenkoder wykorzystujący grafowe warstwy konwolucyjne
+		 -Wariacyjny Grafowy Autoenkoder (VGAE) - Wariacyjna odmiana autoenkodera, enkodująca wejście do reprezentacji ukrytej w postaci średniej i wariancji
+	-Enkoder
+		Wejście enkodera stanowi macierz X oraz A. W pierwszym etapie macierz X przechodzi przez warstwę gęstą, której zadaniem jest rozbudowanie niskowymiarowego wektora cech. Dalej znajdują się dwie grafowe warstwy konwolucyjne. Następnie macierz jest spłaszczana i przechodzi przez dwie warstwy gęste. Po warstwie enkodera znajduje się jeszcze jedna, dodatkowa zwykła warstwa liniowa kodująca wyjście enkodera do przestrzeni ukrytej. W przypadku VGAE istnieją dwie równoległe warstwy liniowe, kodujące wyjście enkodera do warstwy latentnej średnich i logarytmów wariancji.
+		W celu stabilności numerycznej przyjęto, że wariacyjny autoenkoder koduje wejście do wektora logarytmów wariancji. Wynika to z faktu, że warstwa liniowa generuje na wyjściu liczby rzeczywiste, natomiast wariacja i odchylenie standardowe musi być nieujemne. Sam wektor z powstaje w wyniku zastosowania reparametryzacji:
+		(wzór)
+		gdzie:
+		...
+		...
+	-DekoderA
+		Dekoder macierzy sąsiedztwa A składa się z dwóch warstw gęstych. Utworzona zostaje macierz reprezentacji każdego węzła o wymiarze N x d. Później powstaje macierz logitów macierzy sąsiedztwa poprzez wymnożenie reprezentacji węzłów przez zeskalowaną, transponowaną reprezentację węzłów, w wyniku czego powstaje macierz N x N. Wzór operacji przedstawia się następująco.
+		(wzór)
+		Na końcu, do tak utworzonej macierzy dodawany jest wyuczalny bias. Celem powyższych operacji jest docelowo lepsze wyuczenie się reprezentacji węzłów przez sieć. Dodatkowo wynik przemnożenia tych wektorów jest symetryczny, co zdejmuje narzut z modelu na konieczność odwzorowywania symetryczności. W celu późniejszego poprawnego obliczania funkcji straty oraz statystyk, wartości zwracane przez dekoder są logitami, aktywacja i progowanie występuje w modelu później.
+	-DekoderX
+		Dekoder X jest symetryczną implementacją enkodera. W początkowej fazie znajdują się dwie warstwy gęste. Dalej znajduje się zwykła warstwa gęsta wraz z reshape, aby uzyskać macierz N x f, będącą wejściem do warstw konwolucyjnych. Warstwy konwolucyjne oprócz X przyjmują także A' uzyskane z dekodera A. Końcowo następuje projekcja do wymiaru N x f.
+	-Loss
+		Funkcja straty wykorzystywana w celu nauki modelu jest sumą straty rekonstrukcji oraz straty nazwanej locality_loss, czyli straty związanej z niepoprawnym rozmieszczeniem osobników w warstwie latentnej względem wskazanej cechy.
+		-Maska
+			Jak wspomniano wcześniej, większość osobników, które przepływają przez model, posiada mniej niż maksymalna liczba elementów. Niewykorzystane wiersze macierzy X oraz poszczególne komórki macierzy A nie powinny być brane pod uwagę. W implementacji zdecydowano, aby zastosować maskę na niepotrzebne elementy zdekodowanych macierzy.
+			Maska macierzy X obejmuje N - p ostatnich wierszy, gdzie p to liczba elementów danego osobnika.
+			Maska macierzy A obejmuje N - p ostatnich wierszy oraz N - p ostatnich kolumn. Dodatkowo na macierz A nałożona jest maska na przekątnej, gdyż przyjęto założenie, że nie mogę istnieć połączenia elementów samych ze sobą.
+			Maski nakładane są po obliczeniu poszczególnych funkcji straty, jako mnożenie Hadamarda straty przez maskę.
+		-Reconstruction loss
+			Strata rekonstrukcji dzieli się na obliczenie straty rekonstrukcji dekodera A oraz dekodera X. Do obliczenia straty popełnianej przez dekoder A zastosowano Binary Cross Entropy wyrażonej wzorem:
+			(wzór)
+			Grafy tworzone przez osobników są rzadkie, to znaczy w większości połączenia między węzłami nie istnieją. Istotne z punktu widzenia rekonstrukcji jest poprawne wskazanie poprawnych połączeń, dlatego zwiększono wagę pozytywnej klasy do 2.
+
+			Strata rekonstrukcji macierzy X obliczana jest z wykorzystaniem straty Hubera, która łączy zalety MSE i MAE i jest wyrażona wzroem:
+			(wzór)
+
+			W przypadku wersji wariacyjne autoenkodera zastosowano dodatkowy człon straty w postaci dywergencji Kullbacka-Leiblera. Oblicza ona podobieństwo rozkładu elementów wektora 'z' uzyskiwanego w wyniku reparametryzacji do rozkładu normalnego N(0,1). Stratę tę wyraża się wzorem:
+			(wzór)
+
+			Końcowa strata rekonstrukcji powstaje z ważonej sumy powyższych składników i wyraża się wzorem:
+			(wzór recon_loss = (weight_a * loss_a) + loss_x + (kl_weight * kl_loss)
+		-Locality loss
+			Na szczególną uwagę zasługuje zastosowanie w modelu straty locality. Wymusza ona na przestrzeni latentnej, aby grafy podobne do siebie pod danym względem były blisko siebie. Wymuszenie takiego układu przestrzeni ukrytej ma za zadanie wygładzić tę przestrzeń, aby metody optymalizacji, działające w tej przestrzeni, lepiej radziły sobie z procesem optymalizacji.
+			W pracy wykorzystano następujące cechy osobnikow, pod względem których obliczana jest strata
+			-fitness
+			-parts number
+			-similirarity
+			W przypadku cech fitness oraz parts number obliczenie straty polega wpierw na obliczeniu macierzy odległości l2 pomiędzy osobnikami w batchu. Następnie liczona brana jest pod uwagę ich wybrana cecha, na podstawie której powstaje macierz różnic wartości na danych osobnikach. Z obu macierzy pobrany zostaje górny trójkąt, który następnie jest spłaszczany do pojedynczego wektora. Z powstałych wektorów powstają pary odległość <> różnica wartości. Na tej podstawie obliczana jest korelacja Spearmana, w celu zbadania monotoniczności korelacji.
+
+			Końcowa wartość straty locality ważona obliczana jest w poniższy sposób:
+			(wzór loss = lambda_val * (1 - corr))
+
+-CMA_ES
+	Oprócz zbadania przestrzeni ukrytej, która powstanie w wyniku nauczenia autoenkodera z dodatkowym członem straty locality, przygotowano i przeprowadzono także optymalizację z wykorzystaniem algorytmu CMA-ES. Z nauczonego autoenkodera wykorzystano część dekodującą, algorytm CMA-ES zapuszczono zaś w przestrzeni ukrytej autoenkodera.
+	Wyszczególniono następujące podejścia przeprowadzenia optymalizacji powyższą metodą:
+		= Pojedyncze uruchomienie optymalizacji - Ewolucja CMA-ES przeprowadzana jest raz
+		= Pętla optymalizacja <> douczanie. W trakcie ewolucji zapamiętywani są unikalni osobnicy w Hall of fame, następnie autoenkoder jest douczany z wykorzystaniem nowego, zmodyfikowanego zbioru danych. Zbiór danych aktualizowany jest co optymalizację na następujące sposoby:
+			= Dodawanie osobników otrzymanych z ewolucji
+			= Podmiana najstarszych osobników osobnikami otrzymanymi z ewolucji
+			= Podmiana najsłabszych osobników pod względem dopasowania osobnikami otrzymanymi z ewolucji, przy czym nie wymieniano na słabsze
+			= Podmiana losowych osobników osobnikami otrzymanymi z ewolucji
+	Pętla optymalizacji douczania uruchamiana została czterokrotnie, za po każdej optymalizacji następowało douczanie całego autoenkodera 16 epokami.
+
+- Przygotowanie architektury
+W celu znalezienia najlepszej architektury, dającej najlepsze rezultaty, przeprowadzono wiele eksperymentów z różnymi kombinacjami parametrów. Ostatecznie zdecydowano się zrezygnować z warstwy dropout, pogarszała ona wyniki. Jako optymalizator wykorzystano optymalizator Adam z początkowym learning rate równym 0.01, który obniżał się o (wzór) co epokę. Rozmiar batcha ustalono na 256, aby umożliwić lepsze obliczanie locality loss.
+
+- Opis przygotowanych eksperymentów
+	-Badanie warstwy ukrytej
+	 Zbadanie warstwy ukrytej, jej sposobów rozmieszczenia elementów, gładkości, stanowiło jeden z głównych celów eksperymentu. Jednym z nich jest zbadanie fenotypów otoczenia wybranego osobnika. W tym celu wykorzystano wykorzystano zbiór danych oraz wyuczony autoenkoder. Cały zbiór danych zakodowano do ich wektorów w przestrzeni ukrytej, następnie sprawdzono w pierwszej warstwie gęstej w dekoderze X oraz A, które wartości przestrzenii ukrytej mają największe znaczenie. Wybrano 3 z nich, zmieniając po kolei wartości i dekoodowano taki wektor. Zwizualizowano uzyskane w ten sposób struktury.
+	 Zwizualizowano także wpływ zmian na poszczególnym
+
+	 Zbadano także drogę po przestrzeni ukrytej od słabego do dobrego rozwiązania. Przeprowadzono ewolucję zwykłym standardowym algorytmem ewolucyjnym, zapamiętując unikalnych osobników z hall of fame. Następnie zakodowano listę tych osobników na ich reprezentacje w warstwie ukrytej. wybrano część z nich, obliczając pośrednie wektory przy pomocy interpolacji. Tak uzyskane wekotry poddane zostały wizualizacji, aby przekonać się, czy przejście pomiędzy osobnikami podobnymi do siebie jest płynne, to znaczy czy nie zawiera pomiędzy osobników zdegenerowanych lub zupełnie różniących się strukturą.
+
+	 Zbadano dopasowanie otoczenia wybranego wektora w przestrzeni ukrytej. Zakodowano wybranego osobnika, następnie wygenerowano wektory znajdujące się w zadanej odległości od wektora badanego osobnika. Tak otrzymane wektory zdekodowano i poddano ewaluacji w środowisku Framsticks, aby wyznaczyć ich dopasowanie.
+
+	 Zbadano powtarzalność procesu enkodowania i dekodowania osobników, podając wielokrotnie na wejście autoenkodera jego wyjście. Eksperyment miał na celu wskazanie, jak powtarzalny jest autoenkoder oraz czy istnieją pewne obszary, punkty w przestrzeni ukrytej będące atraktorami, miejscami do którego trafiają różniący się od siebie wejściowi osobnicy

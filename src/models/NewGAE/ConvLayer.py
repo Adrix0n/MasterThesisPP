@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 from torch_geometric.nn import DenseGCNConv, DenseGINConv, DenseSAGEConv, DenseGraphConv
+
 class ConvLayer(nn.Module):
 	"""
 	Blok konwolucyjny
